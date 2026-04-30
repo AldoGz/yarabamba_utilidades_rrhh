@@ -42,7 +42,8 @@ import {
     Clear as ClearIcon,
     Email as EmailIcon,
     KeyboardArrowDown as KeyboardArrowDownIcon,
-    GroupWork as GroupWorkIcon
+    GroupWork as GroupWorkIcon,
+    List as ListIcon
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 
@@ -110,7 +111,7 @@ const Row = styled(TableRow)(({ theme }) => ({
     },
 }));
 
-const ExpandableRow = ({ item, color, shouldShowBulkActions, selectedItems, onSelectItem, expanded, onToggleExpand }: any) => {
+const ExpandableRow = ({ item, color, shouldShowBulkActions, selectedItems, onSelectItem, expanded, onToggleExpand, showBatchColumn }: any) => {
     return (
         <>
             <Row sx={{ bgcolor: selectedItems.has(item.id) ? `${color}15` : (item.isWorking ? '#e8f5e8' : '#ffebee') }}>
@@ -122,6 +123,11 @@ const ExpandableRow = ({ item, color, shouldShowBulkActions, selectedItems, onSe
                             onChange={() => onSelectItem(item.id)}
                             sx={{ color: color }}
                         />
+                    </TableCell>
+                )}
+                {showBatchColumn && (
+                    <TableCell sx={{ fontWeight: 600, color: color }}>
+                        {item.batch || '-'}
                     </TableCell>
                 )}
                 <TableCell>{item.numberDocument}</TableCell>
@@ -161,7 +167,7 @@ const ExpandableRow = ({ item, color, shouldShowBulkActions, selectedItems, onSe
                 </TableCell>
             </Row>
             <TableRow>
-                <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={shouldShowBulkActions ? 9 : 8}>
+                <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={shouldShowBulkActions ? (showBatchColumn ? 10 : 9) : (showBatchColumn ? 9 : 8)}>
                     <Collapse in={expanded} timeout="auto" unmountOnExit>
                         <Box sx={{ margin: 2, bgcolor: '#f5f5f5', borderRadius: 2, p: 2 }}>
                             <Typography variant="h6" gutterBottom>
@@ -216,6 +222,8 @@ export default function StatusTable({
     const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
     const [emailFilter, setEmailFilter] = useState('AC');
     const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+    const [internalTab, setInternalTab] = useState(0);
+    const [batchSearchTerm, setBatchSearchTerm] = useState('');
 
     // Batch processing state
     const [batchProgress, setBatchProgress] = useState({ current: 0, total: 0, processing: false });
@@ -232,10 +240,57 @@ export default function StatusTable({
 
     // Determine if this is for batch creation (Programación Pago)
     const isBatchCreation = statusId === 'firmados';
+    
+    // For batch creation, show bulk actions only in "Generar Lote" tab
+    const shouldShowSelectionBulkActions = useMemo(() => {
+        if (!isBatchCreation) return shouldShowBulkActions;
+        return shouldShowBulkActions && internalTab === 0;
+    }, [shouldShowBulkActions, isBatchCreation, internalTab]);
+    
+    // Filter items with FR status for batch generation
+    const frItems = useMemo(() => {
+        return items.filter(item => item.status === 'FR');
+    }, [items]);
+    
+    // Filter items that already have batches for displaying
+    const batchItems = useMemo(() => {
+        return items.filter(item => item.batch && item.batch.trim() !== '');
+    }, [items]);
 
-    // Filter items based on search term and email filter
+    // Internal tabs configuration for batch creation
+    const batchTabs = [
+        {
+            label: 'Generar Lote',
+            description: 'Seleccionar elementos en estado FR para generar nuevos lotes',
+            count: frItems.length
+        },
+        {
+            label: 'Lotes Programados',
+            description: 'Ver elementos que ya tienen lote asignado',
+            count: batchItems.length
+        }
+    ];
+
+    // Filter items based on search term, email filter, internal tab, and batch search
     const filteredItems = useMemo(() => {
         let filtered = items;
+
+        // For batch creation, filter based on internal tab
+        if (isBatchCreation) {
+            if (internalTab === 0) {
+                // Generar Lote tab - only show FR items
+                filtered = frItems;
+            } else {
+                // Lotes Programados tab - only show items with batches
+                filtered = batchItems;
+                // Apply batch search filter for Lotes Programados tab
+                if (batchSearchTerm) {
+                    filtered = filtered.filter(item =>
+                        item.batch && item.batch.toLowerCase().includes(batchSearchTerm.toLowerCase())
+                    );
+                }
+            }
+        }
 
         // Apply email filter if enabled
         if (showEmailFilter) {
@@ -248,8 +303,8 @@ export default function StatusTable({
             }
         }
 
-        // Apply search filter
-        if (searchTerm) {
+        // Apply general search filter (not for batch search in Lotes Programados)
+        if (searchTerm && !(isBatchCreation && internalTab === 1)) {
             filtered = filtered.filter(item =>
                 item.numberDocument.includes(searchTerm) ||
                 item.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -259,7 +314,7 @@ export default function StatusTable({
         }
 
         return filtered;
-    }, [items, searchTerm, emailFilter, showEmailFilter]);
+    }, [items, searchTerm, emailFilter, showEmailFilter, isBatchCreation, internalTab, frItems, batchItems, batchSearchTerm]);
 
     // Get paginated items
     const paginatedItems = useMemo(() => {
@@ -317,6 +372,23 @@ export default function StatusTable({
         }
     };
 
+    const handleInternalTabChange = (event: React.SyntheticEvent, newValue: number) => {
+        setInternalTab(newValue);
+        setSelectedItems(new Set()); // Clear selection when switching tabs
+        setPage(0); // Reset pagination
+        setBatchSearchTerm(''); // Clear batch search when switching tabs
+    };
+
+    const handleBatchSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setBatchSearchTerm(event.target.value);
+        setPage(0); // Reset to first page when searching
+    };
+
+    const handleClearBatchSearch = () => {
+        setBatchSearchTerm('');
+        setPage(0);
+    };
+
     const handleToggleRowExpand = (itemId: number) => {
         const newExpanded = new Set(expandedRows);
         if (newExpanded.has(itemId)) {
@@ -329,6 +401,22 @@ export default function StatusTable({
 
     const openConfirmDialog = () => {
         if (selectedItems.size > 0) {
+            // For batch creation, validate that selected items have FR status
+            if (isBatchCreation) {
+                const selectedIds = Array.from(selectedItems);
+                const validItems = items.filter(item => 
+                    selectedIds.includes(item.id) && item.status === 'FR'
+                );
+                
+                if (validItems.length !== selectedItems.size) {
+                    setOperationStatus({
+                        message: 'Solo se pueden generar lotes con items en estado FR',
+                        severity: 'error'
+                    });
+                    setTimeout(() => setOperationStatus(null), 3000);
+                    return;
+                }
+            }
             setConfirmDialogOpen(true);
         }
     };
@@ -481,7 +569,7 @@ export default function StatusTable({
                             placeholder="Buscar por DNI, email, teléfono o periodo..."
                             value={searchTerm}
                             onChange={handleSearchChange}
-                            sx={{ mb: 2 }}
+                            sx={{ mb: 2, display: !(isBatchCreation && internalTab === 1) ? 'block' : 'none' }}
                             slotProps={{
                                 input: {
                                     startAdornment: (
@@ -504,15 +592,117 @@ export default function StatusTable({
                             }}
                         />
 
+                        {/* Batch Search Field for Lotes Programados */}
+                        {isBatchCreation && internalTab === 1 && (
+                            <TextField
+                                fullWidth
+                                size="small"
+                                placeholder="Buscar por número de lote..."
+                                value={batchSearchTerm}
+                                onChange={handleBatchSearchChange}
+                                sx={{ mb: 2 }}
+                                slotProps={{
+                                    input: {
+                                        startAdornment: (
+                                            <InputAdornment position="start">
+                                                <SearchIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
+                                            </InputAdornment>
+                                        ),
+                                        endAdornment: batchSearchTerm && (
+                                            <InputAdornment position="end">
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={handleClearBatchSearch}
+                                                    sx={{ color: 'text.secondary' }}
+                                                >
+                                                    <ClearIcon sx={{ fontSize: 16 }} />
+                                                </IconButton>
+                                            </InputAdornment>
+                                        )
+                                    }
+                                }}
+                            />
+                        )}
+
                         {/* Results Info */}
-                        {searchTerm && (
+                        {searchTerm && !(isBatchCreation && internalTab === 1) && (
                             <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
                                 {filteredItems.length} resultado{filteredItems.length !== 1 ? 's' : ''} encontrado{filteredItems.length !== 1 ? 's' : ''}
                             </Typography>
                         )}
+                        {batchSearchTerm && isBatchCreation && internalTab === 1 && (
+                            <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+                                {filteredItems.length} resultado{filteredItems.length !== 1 ? 's' : ''} encontrado{filteredItems.length !== 1 ? 's' : ''} para "{batchSearchTerm}"
+                            </Typography>
+                        )}
+
+                        {/* Internal Tabs for Batch Creation */}
+                        {isBatchCreation && (
+                            <Box sx={{ mb: 2 }}>
+                                <Tabs
+                                    value={internalTab}
+                                    onChange={handleInternalTabChange}
+                                    sx={{
+                                        borderBottom: 1,
+                                        borderColor: `${color}30`,
+                                        mb: 2,
+                                        '& .MuiTabs-indicator': {
+                                            backgroundColor: color,
+                                            height: 3
+                                        }
+                                    }}
+                                >
+                                    {batchTabs.map((tab, index) => (
+                                        <Tab
+                                            key={index}
+                                            label={`${tab.label} (${tab.count})`}
+                                            sx={{
+                                                textTransform: 'none',
+                                                fontSize: '0.875rem',
+                                                minWidth: 'auto',
+                                                px: 2,
+                                                color: internalTab === index ? color : 'text.secondary',
+                                                fontWeight: internalTab === index ? 600 : 400,
+                                                bgcolor: internalTab === index ? `${color}10` : 'transparent',
+                                                borderRadius: 1,
+                                                mx: 0.5,
+                                                '&:hover': {
+                                                    bgcolor: internalTab === index ? `${color}15` : `${color}05`
+                                                },
+                                                '&.Mui-selected': {
+                                                    color: color
+                                                }
+                                            }}
+                                        />
+                                    ))}
+                                </Tabs>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+                                    <Typography variant="caption" color="text.secondary">
+                                        Vista actual:
+                                    </Typography>
+                                    <Chip
+                                        label={batchTabs[internalTab].label}
+                                        color="primary"
+                                        size="small"
+                                        sx={{ bgcolor: `${color}20`, color: color }}
+                                    />
+                                    <Typography variant="caption" color="text.secondary">
+                                        {filteredItems.length} resultado{filteredItems.length !== 1 ? 's' : ''}
+                                    </Typography>
+                                </Box>
+                                <Box sx={{ mt: 1, p: 1, bgcolor: `${color}10`, borderRadius: 1 }}>
+                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                                        <strong>Descripción:</strong>
+                                    </Typography>
+                                    <Typography variant="caption" color="text.secondary">
+                                        {batchTabs[internalTab].description}
+                                    </Typography>
+                                </Box>
+                            </Box>
+                        )}
 
                         {/* Bulk Actions Header */}
-                        {shouldShowBulkActions && (
+                        {shouldShowSelectionBulkActions && (
                             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                     <Checkbox
@@ -533,7 +723,7 @@ export default function StatusTable({
                                         variant="contained"
                                         onClick={openConfirmDialog}
                                         disabled={isUpdating}
-                                        startIcon={isBatchCreation ? <GroupWorkIcon /> : <EmailIcon />}
+                                        startIcon={<GroupWorkIcon />}
                                         sx={{
                                             bgcolor: color,
                                             '&:hover': { bgcolor: `${color}dd` },
@@ -541,20 +731,18 @@ export default function StatusTable({
                                         }}
                                     >
                                         {isUpdating 
-                                            ? (isBatchCreation ? 'Creando lote...' : 'Enviando correos...')
-                                            : `${isBatchCreation ? 'Crear Lote' : 'Enviar correos'} (${selectedItems.size})`
+                                            ? 'Generando Lote...'
+                                            : `Generar Lote (${selectedItems.size})`
                                         }
                                     </Button>
                                 )}
                             </Box>
                         )}
-
-                        {/* Table */}
                         <TableContainer sx={{ maxHeight: 400, border: `1px solid ${color}20`, borderRadius: 1 }}>
                             <Table stickyHeader size="small">
                                 <TableHead>
                                     <TableRow sx={{ bgcolor: `${color}10` }}>
-                                        {shouldShowBulkActions && (
+                                        {shouldShowSelectionBulkActions && (
                                             <TableCell padding="checkbox">
                                                 <Checkbox
                                                     size="small"
@@ -564,6 +752,9 @@ export default function StatusTable({
                                                     sx={{ color: color }}
                                                 />
                                             </TableCell>
+                                        )}
+                                        {isBatchCreation && internalTab === 1 && (
+                                            <TableCell sx={{ fontWeight: 600 }}>Lote</TableCell>
                                         )}
                                         <TableCell sx={{ fontWeight: 600 }}>DNI</TableCell>
                                         <TableCell sx={{ fontWeight: 600 }}>Email</TableCell>
@@ -577,22 +768,27 @@ export default function StatusTable({
                                 <TableBody>
                                     {paginatedItems.length > 0 ? (
                                         paginatedItems.map((item) => (
-                                            <ExpandableRow
-                                                key={item.id}
-                                                item={item}
-                                                color={color}
-                                                shouldShowBulkActions={shouldShowBulkActions}
-                                                selectedItems={selectedItems}
-                                                onSelectItem={handleSelectItem}
-                                                expanded={expandedRows.has(item.id)}
-                                                onToggleExpand={() => handleToggleRowExpand(item.id)}
-                                            />
+                <ExpandableRow
+                    key={item.id}
+                    item={item}
+                    color={color}
+                    shouldShowBulkActions={shouldShowSelectionBulkActions}
+                    selectedItems={selectedItems}
+                    onSelectItem={handleSelectItem}
+                    expanded={expandedRows.has(item.id)}
+                    onToggleExpand={() => handleToggleRowExpand(item.id)}
+                    showBatchColumn={isBatchCreation && internalTab === 1}
+                />
                                         ))
                                     ) : (
                                         <TableRow>
-                                            <TableCell colSpan={shouldShowBulkActions ? 9 : 8} align="center" sx={{ py: 4 }}>
+                                            <TableCell colSpan={shouldShowSelectionBulkActions ? (isBatchCreation && internalTab === 1 ? 10 : 9) : (isBatchCreation && internalTab === 1 ? 9 : 8)} align="center" sx={{ py: 4 }}>
                                                 <Typography variant="body2" color="text.secondary">
-                                                    {searchTerm ? 'No se encontraron resultados' : 'No hay elementos disponibles'}
+                                                    {searchTerm && !(isBatchCreation && internalTab === 1) ? 'No se encontraron resultados' :
+                                                     batchSearchTerm && isBatchCreation && internalTab === 1 ? `No se encontraron resultados para "${batchSearchTerm}"` :
+                                                     isBatchCreation && internalTab === 0 ? 'No hay elementos en estado FR para generar lotes' :
+                                                     isBatchCreation && internalTab === 1 ? 'No hay lotes programados' :
+                                                     'No hay elementos disponibles'}
                                                 </Typography>
                                             </TableCell>
                                         </TableRow>
@@ -632,7 +828,7 @@ export default function StatusTable({
                 }}
             >
                 <DialogTitle sx={{ color: color, textAlign: 'center' }}>
-                    {isBatchCreation ? 'Creación de Lote' : 'Actualización Masiva'}
+                    {isBatchCreation ? 'Generación de Lote' : 'Actualización Masiva'}
                 </DialogTitle>
                 <DialogContent sx={{ textAlign: 'center', py: 3 }}>
                     <Box sx={{ mb: 3 }}>
@@ -659,7 +855,7 @@ export default function StatusTable({
                     />
                     <Typography variant="body2" color="text.secondary">
                         {isBatchCreation 
-                            ? 'Creando lote con los elementos seleccionados...'
+                            ? 'Generando lote con los elementos seleccionados...'
                             : 'Actualizando registros en lotes de 100 para evitar sobrecargar el servidor...'
                         }
                     </Typography>
@@ -682,18 +878,18 @@ export default function StatusTable({
                 fullWidth
             >
                 <DialogTitle sx={{ color: color }}>
-                    {isBatchCreation ? 'Confirmar Creación de Lote' : 'Confirmar Envío de Correos'}
+                    {isBatchCreation ? 'Confirmar Generación de Lote' : 'Confirmar Envío de Correos'}
                 </DialogTitle>
                 <DialogContent>
                     <Typography variant="body1" sx={{ mb: 2 }}>
                         {isBatchCreation 
-                            ? `¿Estás seguro de que deseas crear un lote con ${selectedItems.size} elemento${selectedItems.size !== 1 ? 's' : ''}?`
+                            ? `¿Estás seguro de que deseas generar un lote con ${selectedItems.size} elemento${selectedItems.size !== 1 ? 's' : ''}?`
                             : `¿Estás seguro de que deseas enviar las liquidaciones a ${selectedItems.size} destinatario${selectedItems.size !== 1 ? 's' : ''}?`
                         }
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                         {isBatchCreation 
-                            ? 'Se agruparán los elementos seleccionados en un lote único para procesamiento de pago.'
+                            ? 'Se agruparán los elementos seleccionados en un lote único para procesamiento de pago. Solo se pueden seleccionar elementos en estado FR.'
                             : 'Se adjuntará el <strong>archivo de liquidación de haberes</strong> de cada colaborador en formato PDF, junto con un <strong>código de aprobación único</strong> para la firma digital.'
                         }
                     </Typography>
@@ -720,10 +916,11 @@ export default function StatusTable({
                         startIcon={isBatchCreation ? <GroupWorkIcon /> : <EmailIcon />}
                         sx={{ bgcolor: color, '&:hover': { bgcolor: `${color}dd` } }}
                     >
-                        {isUpdating ? (isBatchCreation ? 'Creando...' : 'Enviando...') : (isBatchCreation ? 'Crear Lote' : 'Enviar Correos')}
+                        {isUpdating ? (isBatchCreation ? 'Generando...' : 'Enviando...') : (isBatchCreation ? 'Generar Lote' : 'Enviar Correos')}
                     </Button>
                 </DialogActions>
             </Dialog>
+
 
         </>
     );
