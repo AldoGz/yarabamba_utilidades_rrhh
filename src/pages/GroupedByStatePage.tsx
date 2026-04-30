@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import StatusTable from '../components/cards/StatusTable';
-import { fetchGroupedByState, PersonalItem, bulkUpdateStatus, sendBulkEmail } from '../api/personal';
+import { fetchGroupedByState, PersonalItem, bulkUpdateStatus, sendBulkEmail, createBatch } from '../api/personal';
 
 interface StatusData {
     id: string;
@@ -102,6 +102,10 @@ export default function GroupedByStatePage() {
         await bulkUpdateMutation.mutateAsync(selectedIds);
     };
 
+    const handleBatchCreate = async (selectedIds: number[]) => {
+        await batchCreateMutation.mutateAsync(selectedIds);
+    };
+
     const emailSendMutation = useMutation({
         mutationFn: sendBulkEmail,
         onSuccess: (data) => {
@@ -117,6 +121,26 @@ export default function GroupedByStatePage() {
             setSnackbar({
                 open: true,
                 message: error.message || 'Error al enviar los correos',
+                severity: 'error'
+            });
+        }
+    });
+
+    const batchCreateMutation = useMutation({
+        mutationFn: createBatch,
+        onSuccess: (data) => {
+            setSnackbar({
+                open: true,
+                message: data.message || `Se creó el lote con ${data.batchCount || 0} elementos correctamente`,
+                severity: 'success'
+            });
+            // Refetch data to show updated counts
+            queryClient.invalidateQueries({ queryKey: ['grouped-by-state'] });
+        },
+        onError: (error: any) => {
+            setSnackbar({
+                open: true,
+                message: error.message || 'Error al crear el lote',
                 severity: 'error'
             });
         }
@@ -242,9 +266,9 @@ export default function GroupedByStatePage() {
                             color={statusData[activeTab].color}
                             description={statusData[activeTab].description}
                             items={statusData[activeTab].items}
-                            showBulkActions={statusData[activeTab].id === 'actualizados'}
+                            showBulkActions={statusData[activeTab].id === 'actualizados' || statusData[activeTab].id === 'firmados'}
                             showEmailFilter={statusData[activeTab].id === 'actualizados'}
-                            onBulkUpdate={handleBulkUpdate}
+                            onBulkUpdate={statusData[activeTab].id === 'actualizados' ? handleBulkUpdate : handleBatchCreate}
                             statusId={statusData[activeTab].id}
                         />
                     </Box>

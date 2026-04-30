@@ -76,3 +76,24 @@ export const sendBulkEmail = async (ids: number[]): Promise<EmailSendResponse> =
     throw error;
   }
 };
+
+export interface BatchCreateRequest {
+  ids: number[];
+}
+
+export interface BatchCreateResponse {
+  success: boolean;
+  message: string;
+  batchCount?: number;
+  batchId?: string;
+}
+
+export const createBatch = async (ids: number[]): Promise<BatchCreateResponse> => {
+  try {
+    const response = await apiClient.post('/personal-utilidades/crear-lote', { ids });
+    return response.data;
+  } catch (error) {
+    console.error('Error creating batch:', error);
+    throw error;
+  }
+};

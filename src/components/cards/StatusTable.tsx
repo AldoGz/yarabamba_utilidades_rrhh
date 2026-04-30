@@ -41,7 +41,8 @@ import {
     Search as SearchIcon,
     Clear as ClearIcon,
     Email as EmailIcon,
-    KeyboardArrowDown as KeyboardArrowDownIcon
+    KeyboardArrowDown as KeyboardArrowDownIcon,
+    GroupWork as GroupWorkIcon
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 
@@ -228,6 +229,9 @@ export default function StatusTable({
         // Show bulk actions only for 'Procesando' filter
         return emailFilter === 'AC';
     }, [showBulkActions, showEmailFilter, emailFilter]);
+
+    // Determine if this is for batch creation (Programación Pago)
+    const isBatchCreation = statusId === 'firmados';
 
     // Filter items based on search term and email filter
     const filteredItems = useMemo(() => {
@@ -529,14 +533,17 @@ export default function StatusTable({
                                         variant="contained"
                                         onClick={openConfirmDialog}
                                         disabled={isUpdating}
-                                        startIcon={<EmailIcon />}
+                                        startIcon={isBatchCreation ? <GroupWorkIcon /> : <EmailIcon />}
                                         sx={{
                                             bgcolor: color,
                                             '&:hover': { bgcolor: `${color}dd` },
                                             minWidth: 'auto'
                                         }}
                                     >
-                                        {isUpdating ? 'Enviando correos...' : `Enviar correos (${selectedItems.size})`}
+                                        {isUpdating 
+                                            ? (isBatchCreation ? 'Creando lote...' : 'Enviando correos...')
+                                            : `${isBatchCreation ? 'Crear Lote' : 'Enviar correos'} (${selectedItems.size})`
+                                        }
                                     </Button>
                                 )}
                             </Box>
@@ -625,7 +632,7 @@ export default function StatusTable({
                 }}
             >
                 <DialogTitle sx={{ color: color, textAlign: 'center' }}>
-                    Actualización Masiva
+                    {isBatchCreation ? 'Creación de Lote' : 'Actualización Masiva'}
                 </DialogTitle>
                 <DialogContent sx={{ textAlign: 'center', py: 3 }}>
                     <Box sx={{ mb: 3 }}>
@@ -651,7 +658,10 @@ export default function StatusTable({
                         }}
                     />
                     <Typography variant="body2" color="text.secondary">
-                        Actualizando registros en lotes de 100 para evitar sobrecargar el servidor...
+                        {isBatchCreation 
+                            ? 'Creando lote con los elementos seleccionados...'
+                            : 'Actualizando registros en lotes de 100 para evitar sobrecargar el servidor...'
+                        }
                     </Typography>
                     {operationStatus && (
                         <Alert
@@ -672,21 +682,26 @@ export default function StatusTable({
                 fullWidth
             >
                 <DialogTitle sx={{ color: color }}>
-                    Confirmar Envío de Correos
+                    {isBatchCreation ? 'Confirmar Creación de Lote' : 'Confirmar Envío de Correos'}
                 </DialogTitle>
                 <DialogContent>
                     <Typography variant="body1" sx={{ mb: 2 }}>
-                        ¿Estás seguro de que deseas enviar las liquidaciones a {selectedItems.size} destinatario{selectedItems.size !== 1 ? 's' : ''}?
+                        {isBatchCreation 
+                            ? `¿Estás seguro de que deseas crear un lote con ${selectedItems.size} elemento${selectedItems.size !== 1 ? 's' : ''}?`
+                            : `¿Estás seguro de que deseas enviar las liquidaciones a ${selectedItems.size} destinatario${selectedItems.size !== 1 ? 's' : ''}?`
+                        }
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                        Se adjuntará el <strong>archivo de liquidación de haberes</strong> de cada colaborador en formato PDF, junto con un <strong>código de aprobación único</strong> para la firma digital.
-
+                        {isBatchCreation 
+                            ? 'Se agruparán los elementos seleccionados en un lote único para procesamiento de pago.'
+                            : 'Se adjuntará el <strong>archivo de liquidación de haberes</strong> de cada colaborador en formato PDF, junto con un <strong>código de aprobación único</strong> para la firma digital.'
+                        }
                     </Typography>
                     {isUpdating && (
                         <Box sx={{ mt: 2 }}>
                             <LinearProgress />
                             <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                                Generando PDFs y enviando correos...
+                                {isBatchCreation ? 'Creando lote...' : 'Generando PDFs y enviando correos...'}
                             </Typography>
                         </Box>
                     )}
@@ -702,10 +717,10 @@ export default function StatusTable({
                         onClick={handleBulkUpdate}
                         variant="contained"
                         disabled={isUpdating}
-                        startIcon={<EmailIcon />}
+                        startIcon={isBatchCreation ? <GroupWorkIcon /> : <EmailIcon />}
                         sx={{ bgcolor: color, '&:hover': { bgcolor: `${color}dd` } }}
                     >
-                        {isUpdating ? 'Enviando...' : 'Enviar Correos'}
+                        {isUpdating ? (isBatchCreation ? 'Creando...' : 'Enviando...') : (isBatchCreation ? 'Crear Lote' : 'Enviar Correos')}
                     </Button>
                 </DialogActions>
             </Dialog>
