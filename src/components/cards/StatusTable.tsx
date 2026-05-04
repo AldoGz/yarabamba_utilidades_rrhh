@@ -133,9 +133,9 @@ const ExpandableRow = ({ item, color, shouldShowBulkActions, selectedItems, onSe
                 <TableCell>{item.numberDocument}</TableCell>
                 <TableCell>{item.fullName}</TableCell>
                 <TableCell>{item.period}</TableCell>
-                <TableCell sx={{ color: color, fontWeight: 600 }}>
+                {/* <TableCell sx={{ color: color, fontWeight: 600 }}>
                     S/. {item.amount.toFixed(2)}
-                </TableCell>
+                </TableCell> */}
                 <TableCell>{item.phone1}</TableCell>
                 <TableCell>
                     <Box sx={{
@@ -452,7 +452,7 @@ export default function StatusTable({
             setSelectedItems(new Set());
             setConfirmDialogOpen(false);
             setOperationStatus({
-                message: `Se actualizaron ${selectedIds.length} registros correctamente en ${batches.length} lotes`,
+                message: `Se actualizaron ${selectedIds.length} registros correctamente en ${batches.length} lotes xxx`,
                 severity: 'success'
             });
         } catch (error) {
@@ -809,7 +809,6 @@ export default function StatusTable({
                                         <TableCell sx={{ fontWeight: 600 }}>DNI</TableCell>
                                         <TableCell sx={{ fontWeight: 600 }}>Nombres y Apellidos</TableCell>
                                         <TableCell sx={{ fontWeight: 600 }}>Periodo</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>Monto</TableCell>
                                         <TableCell sx={{ fontWeight: 600 }}>Teléfono</TableCell>
                                         <TableCell sx={{ fontWeight: 600 }}>Estado</TableCell>
                                         <TableCell sx={{ fontWeight: 600 }}>Detalles</TableCell>
@@ -878,7 +877,7 @@ export default function StatusTable({
                 }}
             >
                 <DialogTitle sx={{ color: color, textAlign: 'center' }}>
-                    {isBatchCreation ? 'Generación de Lote' : 'Actualización Masiva'}
+                    {isBatchCreation ? 'Generación de Lote' : 'Envio de Correo a los colaborados'}
                 </DialogTitle>
                 <DialogContent sx={{ textAlign: 'center', py: 3 }}>
                     <Box sx={{ mb: 3 }}>
@@ -906,7 +905,7 @@ export default function StatusTable({
                     <Typography variant="body2" color="text.secondary">
                         {isBatchCreation
                             ? 'Generando lote con los elementos seleccionados...'
-                            : 'Actualizando registros en lotes de 100 para evitar sobrecargar el servidor...'
+                            : 'Enviando correo electronicos a los colaboradores'
                         }
                     </Typography>
                     {operationStatus && (
@@ -934,13 +933,13 @@ export default function StatusTable({
                     <Typography variant="body1" sx={{ mb: 2 }}>
                         {isBatchCreation
                             ? `¿Estás seguro de que deseas generar un lote con ${selectedItems.size} elemento${selectedItems.size !== 1 ? 's' : ''}?`
-                            : `¿Estás seguro de que deseas enviar las liquidaciones a ${selectedItems.size} destinatario${selectedItems.size !== 1 ? 's' : ''}?`
+                            : `¿Estás seguro de que deseas enviar correos a ${selectedItems.size} destinatario${selectedItems.size !== 1 ? 's' : ''}?`
                         }
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                         {isBatchCreation
                             ? 'Se agruparán los elementos seleccionados en un lote único para procesamiento de pago. Solo se pueden seleccionar elementos en estado FR.'
-                            : 'Se adjuntará el <strong>archivo de liquidación de haberes</strong> de cada colaborador en formato PDF, junto con un <strong>código de aprobación único</strong> para la firma digital.'
+                            : 'Se adjuntará el archivo de haberes utilidades de cada colaborador en formato PDF, junto con un código de aprobación único para la firma digital.'
                         }
                     </Typography>
                     {isUpdating && (
