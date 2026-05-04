@@ -23,6 +23,7 @@ interface StatusData {
     icon: React.ReactNode;
     description: string;
     items: PersonalItem[];
+    enabled: boolean;
 }
 
 // Map API response to component data structure
@@ -35,7 +36,38 @@ const mapApiDataToStatusData = (apiData: any): StatusData[] => {
             color: '#4caf50',
             icon: null,
             description: 'Documentos que han sido actualizados por el colaborador',
-            items: apiData.actualizados || []
+            items: apiData.actualizados || [],
+            enabled: true
+        },
+        {
+            id: 'correo_procesados',
+            title: 'Correo Procesado',
+            count: apiData.actualizados.filter((item: any) => item.status === 'EC')?.length || 0,
+            color: '#afa54c',
+            icon: null,
+            description: 'Documentos que han sido actualizados por el colaborador',
+            items: [],
+            enabled: false
+        },
+        {
+            id: 'correo_enviados',
+            title: 'Correo Enviados',
+            count: apiData.actualizados.filter((item: any) => item.status === 'AP')?.length || 0,
+            color: '#8b238f',
+            icon: null,
+            description: 'Documentos que han sido actualizados por el colaborador',
+            items: [],
+            enabled: false
+        },
+        {
+            id: 'correo_rechazados',
+            title: 'Correo Rechazados',
+            count: apiData.actualizados.filter((item: any) => item.status === 'ER')?.length || 0,
+            color: '#c06011',
+            icon: null,
+            description: 'Documentos que han sido actualizados por el colaborador',
+            items: [],
+            enabled: false
         },
         {
             id: 'firmados',
@@ -44,17 +76,9 @@ const mapApiDataToStatusData = (apiData: any): StatusData[] => {
             color: '#ff9800',
             icon: null,
             description: 'Documentos firmados y programados para pago',
-            items: apiData.firmados || []
-        },
-        {
-            id: 'pendientes',
-            title: 'Colaborados Pendientes',
-            count: apiData.pendientes?.length || 0,
-            color: '#f44336',
-            icon: null,
-            description: 'Documentos que requieren actualización de información',
-            items: apiData.pendientes || []
-        },
+            items: apiData.firmados || [],
+            enabled: true
+        }
     ];
 };
 
@@ -239,7 +263,7 @@ export default function GroupedByStatePage() {
                         }
                     }}
                 >
-                    {statusData.map((status: StatusData) => (
+                    {statusData.filter(status => status.enabled).map((status: StatusData) => (
                         <Tab
                             key={status.id}
                             label={status.title}
@@ -251,7 +275,7 @@ export default function GroupedByStatePage() {
                                 '&.Mui-selected': {
                                     color: 'white',
                                     backgroundColor: status.color,
-                                    height: 10 
+                                    height: 10
                                 }
                             }}
                         />
