@@ -133,9 +133,6 @@ const ExpandableRow = ({ item, color, shouldShowBulkActions, selectedItems, onSe
                 <TableCell>{item.numberDocument}</TableCell>
                 <TableCell>{item.fullName}</TableCell>
                 <TableCell>{item.period}</TableCell>
-                {/* <TableCell sx={{ color: color, fontWeight: 600 }}>
-                    S/. {item.amount.toFixed(2)}
-                </TableCell> */}
                 <TableCell>{item.phone1}</TableCell>
                 <TableCell>
                     <Box sx={{
@@ -176,7 +173,7 @@ const ExpandableRow = ({ item, color, shouldShowBulkActions, selectedItems, onSe
                             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
                                 <Box>
                                     <Typography variant="body2" color="text.secondary">
-                                        <strong>Banco ID:</strong> {item.bankId}
+                                        <strong>Banco:</strong> {item.bank}
                                     </Typography>
                                     <Typography variant="body2" color="text.secondary">
                                         <strong>Número de Cuenta:</strong> {item.bankAccountNumber}
@@ -307,6 +304,7 @@ export default function StatusTable({
         if (searchTerm && !(isBatchCreation && internalTab === 1)) {
             filtered = filtered.filter(item =>
                 item.numberDocument.includes(searchTerm) ||
+                /* item.fullName.includes(searchTerm) || */
                 item.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 item.phone1.includes(searchTerm) ||
                 item.period.includes(searchTerm)
@@ -316,18 +314,22 @@ export default function StatusTable({
         return filtered;
     }, [items, searchTerm, emailFilter, showEmailFilter, isBatchCreation, internalTab, frItems, batchItems, batchSearchTerm]);
 
+    // Reset search when items change
+    useEffect(() => {
+        setSearchTerm('');
+        setBatchSearchTerm('');
+        setPage(0);
+        setSelectedItems(new Set());
+        setInternalTab(0);
+    }, [items]);
+
     // Get paginated items
     const paginatedItems = useMemo(() => {
         const startIndex = page * rowsPerPage;
         return filteredItems.slice(startIndex, startIndex + rowsPerPage);
     }, [filteredItems, page, rowsPerPage]);
 
-    const handleExpandClick = () => {
-        setExpanded(!expanded);
-        if (!expanded) {
-            setPage(0); // Reset to first page when expanding
-        }
-    };
+
 
     const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setSearchTerm(event.target.value);
@@ -359,7 +361,7 @@ export default function StatusTable({
         if (newSelected.has(itemId)) {
             newSelected.delete(itemId);
         } else {
-            newSelected.add(itemId);
+            newSelected.add(itemId)
         }
         setSelectedItems(newSelected);
     };
@@ -376,6 +378,7 @@ export default function StatusTable({
         setInternalTab(newValue);
         setSelectedItems(new Set()); // Clear selection when switching tabs
         setPage(0); // Reset pagination
+        setSearchTerm(''); // Clear search when switching tabs
         setBatchSearchTerm(''); // Clear batch search when switching tabs
     };
 
@@ -496,7 +499,9 @@ export default function StatusTable({
                                     value={emailFilterOptions.findIndex(opt => opt.value === emailFilter)}
                                     onChange={(_, newValue) => {
                                         setEmailFilter(emailFilterOptions[newValue].value);
+                                        setSearchTerm(''); // Clear search when switching tabs
                                         setPage(0);
+                                        setSelectedItems(new Set()); // Clear selection when switching tabs
                                     }}
                                     sx={{
                                         borderBottom: 1,
@@ -731,7 +736,7 @@ export default function StatusTable({
                                             minWidth: 'auto'
                                         }}
                                     >
-                                        {isUpdating 
+                                        {isUpdating
                                             ? 'Enviando correos...'
                                             : `Enviar Correos (${selectedItems.size})`
                                         }
