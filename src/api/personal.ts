@@ -16,14 +16,25 @@ export interface PersonalItem {
   batch: string | null;
 }
 
+export interface BatchItem {
+  id: number;
+  period: string;
+  fileName: string;
+  route: string;
+  status: string;
+}
+
 export interface GroupedByStateResponse {
   success: boolean;
+  message: string | null;
   data: {
+    lotes: BatchItem[];
     pendientes: PersonalItem[];
     actualizados: PersonalItem[];
     aprobados: PersonalItem[];
     firmados: PersonalItem[];
   };
+  errors: string | null;
 }
 
 export const fetchGroupedByState = async (): Promise<GroupedByStateResponse> => {
@@ -69,7 +80,7 @@ export interface EmailSendResponse {
 
 export const sendBulkEmail = async (ids: number[]): Promise<EmailSendResponse> => {
   try {
-    const response = await apiClient.post('/personal-utilidades/enviar-correo-masivo', { ids });
+    const response = await apiClient.put('/personal-utilidades/enviar-correo-masivo', { ids });
     return response.data;
   } catch (error) {
     console.error('Error sending bulk email:', error);
@@ -90,7 +101,7 @@ export interface BatchCreateResponse {
 
 export const createBatch = async (ids: number[]): Promise<BatchCreateResponse> => {
   try {
-    const response = await apiClient.post('/personal-utilidades/crear-lote', { ids });
+    const response = await apiClient.put('/personal-utilidades/crear-lote', { ids });
     return response.data;
   } catch (error) {
     console.error('Error creating batch:', error);

@@ -131,7 +131,7 @@ const ExpandableRow = ({ item, color, shouldShowBulkActions, selectedItems, onSe
                     </TableCell>
                 )}
                 <TableCell>{item.numberDocument}</TableCell>
-                <TableCell>{item.email}</TableCell>
+                <TableCell>{item.fullName}</TableCell>
                 <TableCell>{item.period}</TableCell>
                 <TableCell sx={{ color: color, fontWeight: 600 }}>
                     S/. {item.amount.toFixed(2)}
@@ -148,7 +148,7 @@ const ExpandableRow = ({ item, color, shouldShowBulkActions, selectedItems, onSe
                         fontWeight: 500,
                         textAlign: 'center'
                     }}>
-                        { item.labelStatus}
+                        {item.labelStatus}
                     </Box>
                 </TableCell>
                 <TableCell>
@@ -240,18 +240,18 @@ export default function StatusTable({
 
     // Determine if this is for batch creation (Programación Pago)
     const isBatchCreation = statusId === 'firmados';
-    
+
     // For batch creation, show bulk actions only in "Generar Lote" tab
     const shouldShowSelectionBulkActions = useMemo(() => {
         if (!isBatchCreation) return shouldShowBulkActions;
         return shouldShowBulkActions && internalTab === 0;
     }, [shouldShowBulkActions, isBatchCreation, internalTab]);
-    
+
     // Filter items with FR status for batch generation
     const frItems = useMemo(() => {
         return items.filter(item => item.status === 'FR');
     }, [items]);
-    
+
     // Filter items that already have batches for displaying
     const batchItems = useMemo(() => {
         return items.filter(item => item.batch && item.batch.trim() !== '');
@@ -404,10 +404,10 @@ export default function StatusTable({
             // For batch creation, validate that selected items have FR status
             if (isBatchCreation) {
                 const selectedIds = Array.from(selectedItems);
-                const validItems = items.filter(item => 
+                const validItems = items.filter(item =>
                     selectedIds.includes(item.id) && item.status === 'FR'
                 );
-                
+
                 if (validItems.length !== selectedItems.size) {
                     setOperationStatus({
                         message: 'Solo se pueden generar lotes con items en estado FR',
@@ -636,7 +636,8 @@ export default function StatusTable({
                             </Typography>
                         )}
 
-                        {/* Internal Tabs for Batch Creation */}
+
+                        {/* Internal Tabs for Batch Creation - Only for Programación Pago */}
                         {isBatchCreation && (
                             <Box sx={{ mb: 2 }}>
                                 <Tabs
@@ -687,7 +688,7 @@ export default function StatusTable({
                                         sx={{ bgcolor: `${color}20`, color: color }}
                                     />
                                     <Typography variant="caption" color="text.secondary">
-                                        {filteredItems.length} resultado{filteredItems.length !== 1 ? 's' : ''}
+                                        {isBatchCreation && internalTab === 1 ? batchItems.length : filteredItems.length} resultado{(isBatchCreation && internalTab === 1 ? batchItems.length : filteredItems.length) !== 1 ? 's' : ''}
                                     </Typography>
                                 </Box>
                                 <Box sx={{ mt: 1, p: 1, bgcolor: `${color}10`, borderRadius: 1 }}>
@@ -701,8 +702,46 @@ export default function StatusTable({
                             </Box>
                         )}
 
-                        {/* Bulk Actions Header */}
-                        {shouldShowSelectionBulkActions && (
+                        {/* Bulk Actions Header - Only for Email Sending (Colaboradores Registrados) */}
+                        {!isBatchCreation && showBulkActions && (
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <Checkbox
+                                        size="small"
+                                        checked={filteredItems.length > 0 && selectedItems.size === filteredItems.length}
+                                        indeterminate={selectedItems.size > 0 && selectedItems.size < filteredItems.length}
+                                        onChange={handleSelectAll}
+                                        sx={{ color: color }}
+                                    />
+                                    <Typography variant="caption" color="text.secondary">
+                                        Seleccionar todo
+                                    </Typography>
+                                </Box>
+
+                                {selectedItems.size > 0 && (
+                                    <Button
+                                        size="small"
+                                        variant="contained"
+                                        onClick={openConfirmDialog}
+                                        disabled={isUpdating}
+                                        startIcon={<EmailIcon />}
+                                        sx={{
+                                            bgcolor: color,
+                                            '&:hover': { bgcolor: `${color}dd` },
+                                            minWidth: 'auto'
+                                        }}
+                                    >
+                                        {isUpdating
+                                            ? 'Enviando correos...'
+                                            : `Enviar Correos (${selectedItems.size})`
+                                        }
+                                    </Button>
+                                )}
+                            </Box>
+                        )}
+
+                        {/* Bulk Actions Header - Only for Batch Creation (Programación Pago - Generar Lote tab) */}
+                        {isBatchCreation && internalTab === 0 && (
                             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                     <Checkbox
@@ -730,7 +769,7 @@ export default function StatusTable({
                                             minWidth: 'auto'
                                         }}
                                     >
-                                        {isUpdating 
+                                        {isUpdating
                                             ? 'Generando Lote...'
                                             : `Generar Lote (${selectedItems.size})`
                                         }
@@ -742,7 +781,18 @@ export default function StatusTable({
                             <Table stickyHeader size="small">
                                 <TableHead>
                                     <TableRow sx={{ bgcolor: `${color}10` }}>
-                                        {shouldShowSelectionBulkActions && (
+                                        {(!isBatchCreation && showBulkActions) && (
+                                            <TableCell padding="checkbox">
+                                                <Checkbox
+                                                    size="small"
+                                                    checked={filteredItems.length > 0 && selectedItems.size === filteredItems.length}
+                                                    indeterminate={selectedItems.size > 0 && selectedItems.size < filteredItems.length}
+                                                    onChange={handleSelectAll}
+                                                    sx={{ color: color }}
+                                                />
+                                            </TableCell>
+                                        )}
+                                        {isBatchCreation && internalTab === 0 && (
                                             <TableCell padding="checkbox">
                                                 <Checkbox
                                                     size="small"
@@ -757,7 +807,7 @@ export default function StatusTable({
                                             <TableCell sx={{ fontWeight: 600 }}>Lote</TableCell>
                                         )}
                                         <TableCell sx={{ fontWeight: 600 }}>DNI</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>Email</TableCell>
+                                        <TableCell sx={{ fontWeight: 600 }}>Nombres y Apellidos</TableCell>
                                         <TableCell sx={{ fontWeight: 600 }}>Periodo</TableCell>
                                         <TableCell sx={{ fontWeight: 600 }}>Monto</TableCell>
                                         <TableCell sx={{ fontWeight: 600 }}>Teléfono</TableCell>
@@ -768,27 +818,27 @@ export default function StatusTable({
                                 <TableBody>
                                     {paginatedItems.length > 0 ? (
                                         paginatedItems.map((item) => (
-                <ExpandableRow
-                    key={item.id}
-                    item={item}
-                    color={color}
-                    shouldShowBulkActions={shouldShowSelectionBulkActions}
-                    selectedItems={selectedItems}
-                    onSelectItem={handleSelectItem}
-                    expanded={expandedRows.has(item.id)}
-                    onToggleExpand={() => handleToggleRowExpand(item.id)}
-                    showBatchColumn={isBatchCreation && internalTab === 1}
-                />
+                                            <ExpandableRow
+                                                key={item.id}
+                                                item={item}
+                                                color={color}
+                                                shouldShowBulkActions={(!isBatchCreation && showBulkActions) || (isBatchCreation && internalTab === 0)}
+                                                selectedItems={selectedItems}
+                                                onSelectItem={handleSelectItem}
+                                                expanded={expandedRows.has(item.id)}
+                                                onToggleExpand={() => handleToggleRowExpand(item.id)}
+                                                showBatchColumn={isBatchCreation && internalTab === 1}
+                                            />
                                         ))
                                     ) : (
                                         <TableRow>
                                             <TableCell colSpan={shouldShowSelectionBulkActions ? (isBatchCreation && internalTab === 1 ? 10 : 9) : (isBatchCreation && internalTab === 1 ? 9 : 8)} align="center" sx={{ py: 4 }}>
                                                 <Typography variant="body2" color="text.secondary">
                                                     {searchTerm && !(isBatchCreation && internalTab === 1) ? 'No se encontraron resultados' :
-                                                     batchSearchTerm && isBatchCreation && internalTab === 1 ? `No se encontraron resultados para "${batchSearchTerm}"` :
-                                                     isBatchCreation && internalTab === 0 ? 'No hay elementos en estado FR para generar lotes' :
-                                                     isBatchCreation && internalTab === 1 ? 'No hay lotes programados' :
-                                                     'No hay elementos disponibles'}
+                                                        batchSearchTerm && isBatchCreation && internalTab === 1 ? `No se encontraron resultados para "${batchSearchTerm}"` :
+                                                            isBatchCreation && internalTab === 0 ? 'No hay elementos en estado FR para generar lotes' :
+                                                                isBatchCreation && internalTab === 1 ? 'No hay lotes programados' :
+                                                                    'No hay elementos disponibles'}
                                                 </Typography>
                                             </TableCell>
                                         </TableRow>
@@ -854,7 +904,7 @@ export default function StatusTable({
                         }}
                     />
                     <Typography variant="body2" color="text.secondary">
-                        {isBatchCreation 
+                        {isBatchCreation
                             ? 'Generando lote con los elementos seleccionados...'
                             : 'Actualizando registros en lotes de 100 para evitar sobrecargar el servidor...'
                         }
@@ -882,13 +932,13 @@ export default function StatusTable({
                 </DialogTitle>
                 <DialogContent>
                     <Typography variant="body1" sx={{ mb: 2 }}>
-                        {isBatchCreation 
+                        {isBatchCreation
                             ? `¿Estás seguro de que deseas generar un lote con ${selectedItems.size} elemento${selectedItems.size !== 1 ? 's' : ''}?`
                             : `¿Estás seguro de que deseas enviar las liquidaciones a ${selectedItems.size} destinatario${selectedItems.size !== 1 ? 's' : ''}?`
                         }
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                        {isBatchCreation 
+                        {isBatchCreation
                             ? 'Se agruparán los elementos seleccionados en un lote único para procesamiento de pago. Solo se pueden seleccionar elementos en estado FR.'
                             : 'Se adjuntará el <strong>archivo de liquidación de haberes</strong> de cada colaborador en formato PDF, junto con un <strong>código de aprobación único</strong> para la firma digital.'
                         }

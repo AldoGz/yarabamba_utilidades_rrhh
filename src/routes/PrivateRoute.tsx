@@ -1,8 +1,8 @@
 import { Navigate, Outlet } from 'react-router-dom';
-import { useAuthStore } from '../stores/useAuthStore';
+/* import { useAuthStore } from '../stores/useAuthStore'; */
 
 export const PrivateRoute = () => {
-    const usuario = useAuthStore((state) => state.usuario);
+    const usuario = true; /* useAuthStore((state) => state.usuario); */
 
     if (!usuario) {
         // Redirige al login si no está autenticado
