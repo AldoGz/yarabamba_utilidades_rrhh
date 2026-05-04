@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { useStatusTableStore } from '../../stores/useStatusTableStore.ts';
 import {
     Card,
     CardContent,
@@ -210,17 +211,35 @@ export default function StatusTable({
     statusId,
     showEmailFilter = false
 }: StatusTableProps) {
-    const [expanded, setExpanded] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(25); // Increased default for better UX
-    const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
+    // Zustand store for state management
+    const {
+        searchTerm,
+        batchSearchTerm,
+        emailFilter,
+        internalTab,
+        page,
+        rowsPerPage,
+        selectedItems,
+        expandedRows,
+        expanded,
+        setSearchTerm,
+        setBatchSearchTerm,
+        setEmailFilter,
+        setInternalTab,
+        setPage,
+        setRowsPerPage,
+        setSelectedItems,
+        toggleSelectedItem,
+        clearSelectedItems,
+        setExpandedRows,
+        toggleExpandedRow,
+        setExpanded,
+        resetTabStates
+    } = useStatusTableStore();
+
+    // Local states for component-specific functionality
     const [isUpdating, setIsUpdating] = useState(false);
     const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-    const [emailFilter, setEmailFilter] = useState('AC');
-    const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
-    const [internalTab, setInternalTab] = useState(0);
-    const [batchSearchTerm, setBatchSearchTerm] = useState('');
 
     // Batch processing state
     const [batchProgress, setBatchProgress] = useState({ current: 0, total: 0, processing: false });
@@ -314,14 +333,10 @@ export default function StatusTable({
         return filtered;
     }, [items, searchTerm, emailFilter, showEmailFilter, isBatchCreation, internalTab, frItems, batchItems, batchSearchTerm]);
 
-    // Reset search when items change
+    // Reset states when items change
     useEffect(() => {
-        setSearchTerm('');
-        setBatchSearchTerm('');
-        setPage(0);
-        setSelectedItems(new Set());
-        setInternalTab(0);
-    }, [items]);
+        resetTabStates();
+    }, [items, resetTabStates]);
 
     // Get paginated items
     const paginatedItems = useMemo(() => {
@@ -331,21 +346,13 @@ export default function StatusTable({
 
 
 
-    const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setSearchTerm(event.target.value);
-        setPage(0); // Reset to first page when searching
-    };
-
     const handleClearSearch = () => {
         setSearchTerm('');
-        setPage(0);
     };
 
     const handleEmailFilterChange = (event: any) => {
         setEmailFilter(event.target.value);
-        setPage(0); // Reset to first page when filtering
     };
-
 
     const handleChangePage = (event: unknown, newPage: number) => {
         setPage(newPage);
@@ -353,22 +360,15 @@ export default function StatusTable({
 
     const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
         setRowsPerPage(parseInt(event.target.value, 10));
-        setPage(0);
     };
 
     const handleSelectItem = (itemId: number) => {
-        const newSelected = new Set(selectedItems);
-        if (newSelected.has(itemId)) {
-            newSelected.delete(itemId);
-        } else {
-            newSelected.add(itemId)
-        }
-        setSelectedItems(newSelected);
+        toggleSelectedItem(itemId);
     };
 
     const handleSelectAll = () => {
         if (selectedItems.size === filteredItems.length) {
-            setSelectedItems(new Set());
+            clearSelectedItems();
         } else {
             setSelectedItems(new Set(filteredItems.map(item => item.id)));
         }
@@ -376,30 +376,14 @@ export default function StatusTable({
 
     const handleInternalTabChange = (event: React.SyntheticEvent, newValue: number) => {
         setInternalTab(newValue);
-        setSelectedItems(new Set()); // Clear selection when switching tabs
-        setPage(0); // Reset pagination
-        setSearchTerm(''); // Clear search when switching tabs
-        setBatchSearchTerm(''); // Clear batch search when switching tabs
-    };
-
-    const handleBatchSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setBatchSearchTerm(event.target.value);
-        setPage(0); // Reset to first page when searching
     };
 
     const handleClearBatchSearch = () => {
         setBatchSearchTerm('');
-        setPage(0);
     };
 
     const handleToggleRowExpand = (itemId: number) => {
-        const newExpanded = new Set(expandedRows);
-        if (newExpanded.has(itemId)) {
-            newExpanded.delete(itemId);
-        } else {
-            newExpanded.add(itemId);
-        }
-        setExpandedRows(newExpanded);
+        toggleExpandedRow(itemId);
     };
 
     const openConfirmDialog = () => {
@@ -452,7 +436,7 @@ export default function StatusTable({
                 }
             }
 
-            setSelectedItems(new Set());
+            clearSelectedItems();
             setConfirmDialogOpen(false);
             setOperationStatus({
                 message: `Se actualizaron ${selectedIds.length} registros correctamente en ${batches.length} lotes xxx`,
@@ -499,7 +483,7 @@ export default function StatusTable({
                                     value={emailFilterOptions.findIndex(opt => opt.value === emailFilter)}
                                     onChange={(_, newValue) => {
                                         setEmailFilter(emailFilterOptions[newValue].value);
-                                        setSearchTerm(''); // Clear search when switching tabs
+                                        //setSearchTerm(''); // Clear search when switching tabs
                                         setPage(0);
                                         setSelectedItems(new Set()); // Clear selection when switching tabs
                                     }}
@@ -573,7 +557,7 @@ export default function StatusTable({
                             size="small"
                             placeholder="Buscar por DNI, email, teléfono o periodo..."
                             value={searchTerm}
-                            onChange={handleSearchChange}
+                            onChange={(e) => setSearchTerm(e.target.value)}
                             sx={{ mb: 2, display: !(isBatchCreation && internalTab === 1) ? 'block' : 'none' }}
                             slotProps={{
                                 input: {
@@ -604,7 +588,7 @@ export default function StatusTable({
                                 size="small"
                                 placeholder="Buscar por número de lote..."
                                 value={batchSearchTerm}
-                                onChange={handleBatchSearchChange}
+                                onChange={(e) => setBatchSearchTerm(e.target.value)}
                                 sx={{ mb: 2 }}
                                 slotProps={{
                                     input: {
