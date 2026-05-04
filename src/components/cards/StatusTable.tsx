@@ -702,8 +702,8 @@ export default function StatusTable({
                             </Box>
                         )}
 
-                        {/* Bulk Actions Header - Only for Email Sending (Colaboradores Registrados) */}
-                        {!isBatchCreation && showBulkActions && (
+                        {/* Bulk Actions Header - Only for Email Sending (Colaboradores Registrados - Procesando tab only) */}
+                        {!isBatchCreation && showBulkActions && emailFilter === 'AC' && (
                             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                     <Checkbox
@@ -731,7 +731,7 @@ export default function StatusTable({
                                             minWidth: 'auto'
                                         }}
                                     >
-                                        {isUpdating
+                                        {isUpdating 
                                             ? 'Enviando correos...'
                                             : `Enviar Correos (${selectedItems.size})`
                                         }
@@ -781,7 +781,7 @@ export default function StatusTable({
                             <Table stickyHeader size="small">
                                 <TableHead>
                                     <TableRow sx={{ bgcolor: `${color}10` }}>
-                                        {(!isBatchCreation && showBulkActions) && (
+                                        {(!isBatchCreation && showBulkActions && emailFilter === 'AC') && (
                                             <TableCell padding="checkbox">
                                                 <Checkbox
                                                     size="small"
@@ -822,7 +822,7 @@ export default function StatusTable({
                                                 key={item.id}
                                                 item={item}
                                                 color={color}
-                                                shouldShowBulkActions={(!isBatchCreation && showBulkActions) || (isBatchCreation && internalTab === 0)}
+                                                shouldShowBulkActions={(!isBatchCreation && showBulkActions && emailFilter === 'AC') || (isBatchCreation && internalTab === 0)}
                                                 selectedItems={selectedItems}
                                                 onSelectItem={handleSelectItem}
                                                 expanded={expandedRows.has(item.id)}

@@ -31,7 +31,7 @@ const mapApiDataToStatusData = (apiData: any): StatusData[] => {
         {
             id: 'actualizados',
             title: 'Colaboradores Registrados',
-            count: apiData.actualizados?.length || 0,
+            count: apiData.actualizados.filter((item: any) => item.status === 'AC')?.length || 0,
             color: '#4caf50',
             icon: null,
             description: 'Documentos que han sido actualizados por el colaborador',
