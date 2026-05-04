@@ -232,7 +232,11 @@ export default function GroupedByStatePage() {
                     sx={{
                         borderBottom: 1,
                         borderColor: 'divider',
-                        mb: 4
+                        mb: 4,
+                        '& .MuiTabs-indicator': {
+                            backgroundColor: statusData[activeTab]?.color || 'primary',
+                            height: 3
+                        }
                     }}
                 >
                     {statusData.map((status: StatusData) => (
@@ -243,13 +247,11 @@ export default function GroupedByStatePage() {
                                 textTransform: 'none',
                                 fontSize: '0.95rem',
                                 minWidth: 'auto',
-                                px: 2,/* 
-                                color: status.color, */
+                                px: 5,
                                 '&.Mui-selected': {
                                     color: 'white',
-                                    backgroundColor: status.color,   // color de la línea
-                                    height: 3,                   // opcional: grosor
-                                    // o también puedes usar un valor del tema: theme.palette.primary.main
+                                    backgroundColor: status.color,
+                                    height: 10 
                                 }
                             }}
                         />
