@@ -1,19 +1,20 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import {
     Box,
     Typography,
-    Paper,
     Fade,
     Container,
     CircularProgress,
     Alert,
-    Snackbar,
-    Tabs,
-    Tab
+    Snackbar
 } from '@mui/material';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import StatusTable from '../components/cards/StatusTable';
-import { fetchGroupedByState, PersonalItem, bulkUpdateStatus, sendBulkEmail, createBatch } from '../api/personal';
+import { StatusTabs } from '../components/layout/StatusTabs';
+import { StatusSummary } from '../components/layout/StatusSummary';
+import { EmailStatusCounters } from '../components/layout/EmailStatusCounters';
+import { useGroupedStateData } from '../hooks/useGroupedStateData';
+import { useGroupedStateUI } from '../hooks/useGroupedStateUI';
+import { fetchGroupedByState, PersonalItem } from '../api/personal';
 
 interface StatusData {
     id: string;
@@ -82,93 +83,76 @@ const mapApiDataToStatusData = (apiData: any): StatusData[] => {
     ];
 };
 
+// Get email status counters for visual display
+const getEmailStatusCounters = (apiData: any) => {
+    return [
+        {
+            id: 'correo_procesados',
+            title: 'Correo Procesado',
+            count: apiData.actualizados.filter((item: any) => item.status === 'EC')?.length || 0,
+            color: '#2196f3',
+            description: 'Correos procesados y enviados'
+        },
+        {
+            id: 'correo_enviados',
+            title: 'Correo Enviados',
+            count: apiData.actualizados.filter((item: any) => item.status === 'AP')?.length || 0,
+            color: '#9c27b0',
+            description: 'Correos aprobados y entregados'
+        },
+        {
+            id: 'correo_rechazados',
+            title: 'Correo Rechazados',
+            count: apiData.actualizados.filter((item: any) => item.status === 'ER')?.length || 0,
+            color: '#f44336',
+            description: 'Correos con errores o rechazados'
+        }
+    ];
+};
+
 export default function GroupedByStatePage() {
-    const queryClient = useQueryClient();
-    const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
-    const [activeTab, setActiveTab] = useState(0);
+    // Custom hooks
+    const { data: apiData, isLoading, error, refetch, emailSendMutation, batchCreateMutation } = useGroupedStateData();
+    const { activeTab, snackbar, handleTabChange, setSnackbar, closeSnackbar } = useGroupedStateUI();
 
     // Dynamic year calculation
     const currentYear = new Date().getFullYear();
     const utilityYear = currentYear - 1;
 
-    const { data: apiData, isLoading, error, refetch } = useQuery({
-        queryKey: ['grouped-by-state'],
-        queryFn: fetchGroupedByState,
-        refetchInterval: 30000, // Refetch every 30 seconds
-        retry: 3
-    });
-
-    const bulkUpdateMutation = useMutation({
-        mutationFn: bulkUpdateStatus,
-        onSuccess: (data) => {
-            setSnackbar({
-                open: true,
-                message: data.message || `Se actualizaron ${data.updatedCount || 0} elementos correctamente`,
-                severity: 'success'
-            });
-            // Refetch data to show updated counts
-            queryClient.invalidateQueries({ queryKey: ['grouped-by-state'] });
-        },
-        onError: (error: any) => {
-            setSnackbar({
-                open: true,
-                message: error.message || 'Error al actualizar los elementos',
-                severity: 'error'
-            });
-        }
-    });
-
-    const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-        setActiveTab(newValue);
-    };
-
+    // Handlers
     const handleBulkUpdate = async (selectedIds: number[]) => {
-        await bulkUpdateMutation.mutateAsync(selectedIds);
-    };
-
-    const handleBatchCreate = async (selectedIds: number[]) => {
-        await batchCreateMutation.mutateAsync(selectedIds);
-    };
-
-    const emailSendMutation = useMutation({
-        mutationFn: sendBulkEmail,
-        onSuccess: (data) => {
+        try {
+            await emailSendMutation.mutateAsync(selectedIds);
             setSnackbar({
                 open: true,
-                message: data.message || `Se enviaron ${data.sentCount || 0} correos correctamente`,
+                message: `Se enviaron ${selectedIds.length} correos correctamente`,
                 severity: 'success'
             });
-            // Refetch data to show updated counts
-            queryClient.invalidateQueries({ queryKey: ['grouped-by-state'] });
-        },
-        onError: (error: any) => {
+        } catch (error: any) {
             setSnackbar({
                 open: true,
                 message: error.message || 'Error al enviar los correos',
                 severity: 'error'
             });
         }
-    });
+    };
 
-    const batchCreateMutation = useMutation({
-        mutationFn: createBatch,
-        onSuccess: (data) => {
+    const handleBatchCreate = async (selectedIds: number[]) => {
+        try {
+            await batchCreateMutation.mutateAsync(selectedIds);
             setSnackbar({
                 open: true,
-                message: data.message || `Se creó el lote con ${data.batchCount || 0} elementos correctamente`,
+                message: `Se creó el lote con ${selectedIds.length} elementos correctamente`,
                 severity: 'success'
             });
-            // Refetch data to show updated counts
-            queryClient.invalidateQueries({ queryKey: ['grouped-by-state'] });
-        },
-        onError: (error: any) => {
+        } catch (error: any) {
             setSnackbar({
                 open: true,
                 message: error.message || 'Error al crear el lote',
                 severity: 'error'
             });
         }
-    });
+    };
 
     const statusData = apiData ? mapApiDataToStatusData(apiData.data) : [];
 
@@ -212,32 +196,14 @@ export default function GroupedByStatePage() {
                     Sistema de Reparto de Utilidades {utilityYear}
                 </Typography>
 
-                <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 2 }}>
-                    <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-                        Resumen General
-                    </Typography>
-                    <Box sx={{
-                        display: 'grid',
-                        gridTemplateColumns: {
-                            xs: 'repeat(2, 1fr)',
-                            sm: 'repeat(4, 1fr)'
-                        },
-                        gap: 2
-                    }}>
-                        {
-                            statusData.map((status: StatusData) => (
-                                <Box key={status.id} sx={{ textAlign: 'center' }}>
-                                    <Typography variant="h4" sx={{ color: status.color, fontWeight: 600 }}>
-                                        {status.count}
-                                    </Typography>
-                                    <Typography variant="body2" sx={{ color: status.color, fontWeight: 600 }}>
-                                        {status.title}
-                                    </Typography>
-                                </Box>
-                            ))
-                        }
-                    </Box>
-                </Box>
+                {/* Status Summary Component */}
+                <StatusSummary statusData={statusData.filter(status => status.enabled)} />
+
+                {/* Email Status Counters Component */}
+                {apiData && (
+                    <EmailStatusCounters counters={getEmailStatusCounters(apiData.data)} />
+                )}
+
                 <Typography
                     variant="body1"
                     sx={{
@@ -249,39 +215,14 @@ export default function GroupedByStatePage() {
                     correspondientes al ejercicio fiscal {utilityYear}. Monitorea en tiempo real el estado de los documentos
                     de los colaboradores y optimiza el flujo de aprobación.
                 </Typography>
-
-                <Tabs
-                    value={activeTab}
-                    onChange={handleTabChange}
-                    sx={{
-                        borderBottom: 1,
-                        borderColor: 'divider',
-                        mb: 4,
-                        '& .MuiTabs-indicator': {
-                            backgroundColor: statusData[activeTab]?.color || 'primary',
-                            height: 3
-                        }
-                    }}
-                >
-                    {statusData.filter(status => status.enabled).map((status: StatusData) => (
-                        <Tab
-                            key={status.id}
-                            label={status.title}
-                            sx={{
-                                textTransform: 'none',
-                                fontSize: '0.95rem',
-                                minWidth: 'auto',
-                                px: 5,
-                                '&.Mui-selected': {
-                                    color: 'white',
-                                    backgroundColor: status.color,
-                                    height: 10
-                                }
-                            }}
-                        />
-                    ))}
-                </Tabs>
             </Box>
+
+            {/* Status Tabs Component */}
+            <StatusTabs 
+                statusData={statusData.filter(status => status.enabled)}
+                activeTab={activeTab}
+                onTabChange={handleTabChange}
+            />
 
             <Box sx={{ mb: 4 }}>
                 <Fade in={true} timeout={600}>

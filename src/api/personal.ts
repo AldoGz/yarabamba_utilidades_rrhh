@@ -39,7 +39,7 @@ export interface GroupedByStateResponse {
 
 export const fetchGroupedByState = async (): Promise<GroupedByStateResponse> => {
   try {
-    const response = await apiClient.post('/personal-utilidades/agrupados-por-estado');
+    const response = await apiClient.get('/personal-utilidades/agrupados-por-estado');
     return response.data;
   } catch (error) {
     console.error('Error fetching grouped by state data:', error);
@@ -80,7 +80,7 @@ export interface EmailSendResponse {
 
 export const sendBulkEmail = async (ids: number[]): Promise<EmailSendResponse> => {
   try {
-    const response = await apiClient.put('/personal-utilidades/enviar-correo-masivo', { ids });
+    const response = await apiClient.put('/personal-utilidades/batch/enviar-correo', { ids });
     return response.data;
   } catch (error) {
     console.error('Error sending bulk email:', error);
