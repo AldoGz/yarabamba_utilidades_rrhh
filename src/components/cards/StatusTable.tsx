@@ -140,8 +140,8 @@ const ExpandableRow = ({ item, color, shouldShowBulkActions, selectedItems, onSe
                         px: 1,
                         py: 0.5,
                         borderRadius: 1,
-                        bgcolor: item.isWorking ? '#e8f5e8' : '#ffebee',
-                        color: item.colorStatus,
+                        bgcolor: item.colorStatus,
+                        color: 'white',
                         fontSize: '0.75rem',
                         fontWeight: 500,
                         textAlign: 'center'
