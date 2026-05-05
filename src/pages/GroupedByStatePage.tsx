@@ -44,7 +44,9 @@ const mapApiDataToStatusData = (apiData: any): StatusData[] => {
         phone2: item.phone2,
         isWorking: item.esLaborando || item.isWorking,
         status: item.estado || item.status,
-        batch: item.lote || item.batch
+        batch: item.lote || item.batch,
+        statusColor: item.statusColor,
+        statusLabel: item.statusLabel
     });
 
     return [

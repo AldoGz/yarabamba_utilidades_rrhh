@@ -83,6 +83,8 @@ interface StatusTableProps {
         isWorking: boolean;
         status: string;
         batch: string | null;
+        statusColor: string;
+        statusLabel: string;
     }>;
     showBulkActions?: boolean;
     onBulkUpdate?: (selectedIds: number[]) => Promise<void>;
@@ -142,13 +144,13 @@ const ExpandableRow = ({ item, color, shouldShowBulkActions, selectedItems, onSe
                         px: 1,
                         py: 0.5,
                         borderRadius: 1,
-                        bgcolor: item.colorStatus,
+                        bgcolor: item.statusColor,
                         color: 'white',
                         fontSize: '0.75rem',
                         fontWeight: 500,
                         textAlign: 'center'
                     }}>
-                        {item.labelStatus}
+                        {item.statusLabel}
                     </Box>
                 </TableCell>
                 <TableCell>

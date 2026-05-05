@@ -15,6 +15,8 @@ export interface PersonalItem {
   isWorking: boolean;
   status: string;
   batch: string | null;
+  statusColor: string;
+  statusLabel: string;
 }
 
 export interface BatchItem {
