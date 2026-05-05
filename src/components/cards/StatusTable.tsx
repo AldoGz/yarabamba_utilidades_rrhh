@@ -569,7 +569,7 @@ export default function StatusTable({
                         <TextField
                             fullWidth
                             size="small"
-                            placeholder="Buscar por DNI, email, teléfono o periodo..."
+                            placeholder="Buscar por DNI o Nombres y Apellidos"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             sx={{ mb: 2, display: !(isBatchCreation && internalTab === 1) ? 'block' : 'none' }}

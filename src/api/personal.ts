@@ -3,6 +3,7 @@ import { apiClient } from './client';
 export interface PersonalItem {
   id: number;
   numberDocument: string;
+  fullName: string;
   period: string;
   amount: number;
   bankId: number;

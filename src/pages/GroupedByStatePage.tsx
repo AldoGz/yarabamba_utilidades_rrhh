@@ -29,6 +29,24 @@ interface StatusData {
 
 // Map API response to component data structure
 const mapApiDataToStatusData = (apiData: any): StatusData[] => {
+    // Transform API data to match PersonalItem interface
+    const transformApiItem = (item: any) => ({
+        id: item.id,
+        numberDocument: item.numeroDocumento || item.numberDocument,
+        fullName: item.nombresCompletos || item.fullName,
+        period: item.periodo || item.period,
+        amount: item.importe || item.amount,
+        bankId: item.idBanco || item.bankId,
+        bankAccountNumber: item.cuentaBancaria || item.bankAccountNumber,
+        cci: item.cci,
+        email: item.email,
+        phone1: item.phone1,
+        phone2: item.phone2,
+        isWorking: item.esLaborando || item.isWorking,
+        status: item.estado || item.status,
+        batch: item.lote || item.batch
+    });
+
     return [
         {
             id: 'actualizados',
@@ -37,7 +55,7 @@ const mapApiDataToStatusData = (apiData: any): StatusData[] => {
             color: '#4caf50',
             icon: null,
             description: 'Documentos que han sido actualizados por el colaborador',
-            items: apiData.actualizados || [],
+            items: (apiData.actualizados || []).map(transformApiItem),
             enabled: true
         },
         {
@@ -77,7 +95,7 @@ const mapApiDataToStatusData = (apiData: any): StatusData[] => {
             color: '#ff9800',
             icon: null,
             description: 'Documentos firmados y programados para pago',
-            items: apiData.firmados || [],
+            items: (apiData.firmados || []).map(transformApiItem),
             enabled: true
         }
     ];
@@ -248,11 +266,11 @@ export default function GroupedByStatePage() {
             <Snackbar
                 open={snackbar.open}
                 autoHideDuration={6000}
-                onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+                onClose={closeSnackbar}
                 anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
             >
                 <Alert
-                    onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+                    onClose={closeSnackbar}
                     severity={snackbar.severity}
                     sx={{ width: '100%' }}
                 >
