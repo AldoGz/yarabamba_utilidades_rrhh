@@ -71,6 +71,7 @@ interface StatusTableProps {
     items: Array<{
         id: number;
         numberDocument: string;
+        fullName: string;
         period: string;
         amount: number;
         bankId: number;
@@ -133,6 +134,7 @@ const ExpandableRow = ({ item, color, shouldShowBulkActions, selectedItems, onSe
                 )}
                 <TableCell>{item.numberDocument}</TableCell>
                 <TableCell>{item.fullName}</TableCell>
+                <TableCell align="right">{item.amount}</TableCell>
                 <TableCell>{item.period}</TableCell>
                 <TableCell>{item.phone1}</TableCell>
                 <TableCell>
@@ -321,13 +323,25 @@ export default function StatusTable({
 
         // Apply general search filter (not for batch search in Lotes Programados)
         if (searchTerm && !(isBatchCreation && internalTab === 1)) {
-            filtered = filtered.filter(item =>
-                item.numberDocument.includes(searchTerm) ||
-                /* item.fullName.includes(searchTerm) || */
-                item.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                item.phone1.includes(searchTerm) ||
-                item.period.includes(searchTerm)
-            );
+            filtered = filtered.filter(item => {
+                const normalizedSearch = searchTerm.trim().toLowerCase();
+                const numberDoc = item.numberDocument || "";
+                const fullName = item.fullName || "";
+
+                const normalizedName = fullName
+                    .toLowerCase()
+                    .normalize("NFD")
+                    .replace(/[\u0300-\u036f]/g, "");
+
+                const normalizedSearchClean = normalizedSearch
+                    .normalize("NFD")
+                    .replace(/[\u0300-\u036f]/g, "");
+
+                return (
+                    numberDoc.includes(normalizedSearch) ||
+                    normalizedName.includes(normalizedSearchClean)
+                );
+            });
         }
 
         return filtered;
@@ -797,10 +811,11 @@ export default function StatusTable({
                                         )}
                                         <TableCell sx={{ fontWeight: 600 }}>DNI</TableCell>
                                         <TableCell sx={{ fontWeight: 600 }}>Nombres y Apellidos</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>Periodo</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>Teléfono</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>Estado</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>Detalles</TableCell>
+                                        <TableCell>Monto</TableCell>
+                                        <TableCell>Periodo</TableCell>
+                                        <TableCell>Teléfono</TableCell>
+                                        <TableCell>Estado</TableCell>
+                                        <TableCell>Detalles</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
