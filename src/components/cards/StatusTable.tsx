@@ -85,6 +85,7 @@ interface StatusTableProps {
         batch: string | null;
         statusColor: string;
         statusLabel: string;
+        updatedAt : string
     }>;
     showBulkActions?: boolean;
     onBulkUpdate?: (selectedIds: number[]) => Promise<void>;
@@ -139,6 +140,7 @@ const ExpandableRow = ({ item, color, shouldShowBulkActions, selectedItems, onSe
                 <TableCell align="right">{item.amount}</TableCell>
                 <TableCell>{item.period}</TableCell>
                 <TableCell>{item.phone1}</TableCell>
+                <TableCell>{item.updatedAt}</TableCell>
                 <TableCell>
                     <Box sx={{
                         px: 1,
@@ -816,6 +818,7 @@ export default function StatusTable({
                                         <TableCell>Monto</TableCell>
                                         <TableCell>Periodo</TableCell>
                                         <TableCell>Teléfono</TableCell>
+                                        <TableCell>Fecha Registro</TableCell>
                                         <TableCell>Estado</TableCell>
                                         <TableCell>Detalles</TableCell>
                                     </TableRow>

@@ -32,21 +32,22 @@ const mapApiDataToStatusData = (apiData: any): StatusData[] => {
     // Transform API data to match PersonalItem interface
     const transformApiItem = (item: any) => ({
         id: item.id,
-        numberDocument: item.numeroDocumento || item.numberDocument,
-        fullName: item.nombresCompletos || item.fullName,
-        period: item.periodo || item.period,
-        amount: item.importe || item.amount,
-        bankId: item.idBanco || item.bankId,
-        bankAccountNumber: item.cuentaBancaria || item.bankAccountNumber,
+        numberDocument: item.numberDocument,
+        fullName:item.fullName,
+        period: item.period,
+        amount: item.amount,
+        bankId: item.bankId,
+        bankAccountNumber: item.bankAccountNumber,
         cci: item.cci,
         email: item.email,
         phone1: item.phone1,
         phone2: item.phone2,
-        isWorking: item.esLaborando || item.isWorking,
-        status: item.estado || item.status,
-        batch: item.lote || item.batch,
+        isWorking: item.isWorking,
+        status: item.status,
+        batch: item.batch,
         statusColor: item.statusColor,
-        statusLabel: item.statusLabel
+        statusLabel: item.statusLabel,
+        updatedAt: item.updatedAt
     });
 
     return [
@@ -238,7 +239,7 @@ export default function GroupedByStatePage() {
             </Box>
 
             {/* Status Tabs Component */}
-            <StatusTabs 
+            <StatusTabs
                 statusData={statusData.filter(status => status.enabled)}
                 activeTab={activeTab}
                 onTabChange={handleTabChange}

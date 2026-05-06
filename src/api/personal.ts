@@ -17,6 +17,7 @@ export interface PersonalItem {
   batch: string | null;
   statusColor: string;
   statusLabel: string;
+  updatedAt: string;
 }
 
 export interface BatchItem {
