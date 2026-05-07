@@ -219,10 +219,7 @@ export default function GroupedByStatePage() {
                 <Fade in={true} timeout={600}>
                     <Box>
                         <StatusTable
-                            title={statusData[activeTab].title}
-                            count={statusData[activeTab].count}
                             color={statusData[activeTab].color}
-                            description={statusData[activeTab].description}
                             items={statusData[activeTab].items}
                             showBulkActions={statusData[activeTab].id === 'actualizados' || statusData[activeTab].id === 'firmados'}
                             showEmailFilter={statusData[activeTab].id === 'actualizados'}

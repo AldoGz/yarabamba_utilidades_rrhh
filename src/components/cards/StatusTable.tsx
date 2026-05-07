@@ -64,10 +64,7 @@ const emailFilterOptions = [
 
 
 interface StatusTableProps {
-    title: string;
-    count: number;
-    color: string;
-    description: string;
+    color: string; 
     items: Array<{
         id: number;
         numberDocument: string;
@@ -213,10 +210,7 @@ const ExpandableRow = ({ item, color, shouldShowBulkActions, selectedItems, onSe
 };
 
 export default function StatusTable({
-    title,
-    count,
     color,
-    description,
     items,
     showBulkActions = false,
     onBulkUpdate,
