@@ -90,16 +90,6 @@ interface StatusTableProps {
     showEmailFilter?: boolean;
 }
 
-const ExpandMore = styled((props: any) => {
-    const { expand, ...other } = props;
-    return <IconButton {...other} />;
-})(({ theme, expand }) => ({
-    transform: !expand ? 'rotate(0deg)' : 'rotate(180deg)',
-    marginLeft: 'auto',
-    transition: theme.transitions.create('transform', {
-        duration: theme.transitions.duration.shortest,
-    }),
-}));
 
 const Row = styled(TableRow)(({ theme }) => ({
     '&:nth-of-type(odd)': {
@@ -114,7 +104,7 @@ const Row = styled(TableRow)(({ theme }) => ({
 }));
 
 const ExpandableRow = ({ item, color, shouldShowBulkActions, selectedItems, onSelectItem, expanded, onToggleExpand, showBatchColumn }: any) => {
-    /* console.log("=Z", item); */
+
     return (
         <>
             <Row sx={{ bgcolor: selectedItems.has(item.id) ? `${color}15` : (item.isWorking ? '#e8f5e8' : '#ffebee') }}>
@@ -217,9 +207,8 @@ export default function StatusTable({
     statusId,
     showEmailFilter = false
 }: StatusTableProps) {
-    // 1. Nuevo estado (añadir junto a los otros useState)
     const [additionalFilter, setAdditionalFilter] = useState<string>('todos');
-    // Zustand store for state management
+    
     const {
         searchTerm,
         batchSearchTerm,
@@ -295,19 +284,14 @@ export default function StatusTable({
         } */
     ];
 
-    // Filter items based on search term, email filter, internal tab, and batch search
     const filteredItems = useMemo(() => {
         let filtered = items;
 
-        // For batch creation, filter based on internal tab
         if (isBatchCreation) {
             if (internalTab === 0) {
-                // Generar Lote tab - only show FR items
                 filtered = frItems;
             } else {
-                // Lotes Programados tab - only show items with batches
                 filtered = batchItems;
-                // Apply batch search filter for Lotes Programados tab
                 if (batchSearchTerm) {
                     filtered = filtered.filter(item =>
                         item.batch && item.batch.toLowerCase().includes(batchSearchTerm.toLowerCase())
@@ -316,12 +300,9 @@ export default function StatusTable({
             }
         }
 
-        // Apply email filter if enabled
         if (showEmailFilter) {
             if (emailFilter === 'XX') {
-                console.log(additionalFilter);
                 filtered = filtered.filter(item => ['EC', 'ER', 'AP'].includes(item.status));
-                // Apply additional filter if not 'todos'
                 if (additionalFilter !== 'todos') {
                     filtered = filtered.filter(item => item.status === additionalFilter);
                 }
@@ -330,7 +311,6 @@ export default function StatusTable({
             }
         }
 
-        // Apply general search filter (not for batch search in Lotes Programados)
         if (searchTerm && !(isBatchCreation && internalTab === 1)) {
             filtered = filtered.filter(item => {
                 const normalizedSearch = searchTerm.trim().toLowerCase();
