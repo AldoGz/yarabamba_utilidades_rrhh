@@ -85,7 +85,7 @@ interface StatusTableProps {
         batch: string | null;
         statusColor: string;
         statusLabel: string;
-        updatedAt : string
+        updatedAt: string
     }>;
     showBulkActions?: boolean;
     onBulkUpdate?: (selectedIds: number[]) => Promise<void>;
@@ -117,6 +117,7 @@ const Row = styled(TableRow)(({ theme }) => ({
 }));
 
 const ExpandableRow = ({ item, color, shouldShowBulkActions, selectedItems, onSelectItem, expanded, onToggleExpand, showBatchColumn }: any) => {
+    /* console.log("=Z", item); */
     return (
         <>
             <Row sx={{ bgcolor: selectedItems.has(item.id) ? `${color}15` : (item.isWorking ? '#e8f5e8' : '#ffebee') }}>
@@ -218,6 +219,8 @@ export default function StatusTable({
     showEmailFilter = false
 }: StatusTableProps) {
     // Zustand store for state management
+
+    console.log("StatusTable props:", { title, count, color, description, items, showBulkActions, onBulkUpdate, statusId, showEmailFilter });
     const {
         searchTerm,
         batchSearchTerm,
@@ -824,6 +827,7 @@ export default function StatusTable({
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
+                                    
                                     {paginatedItems.length > 0 ? (
                                         paginatedItems.map((item) => (
                                             <ExpandableRow

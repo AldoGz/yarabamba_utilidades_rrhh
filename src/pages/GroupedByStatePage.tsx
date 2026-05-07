@@ -33,7 +33,7 @@ const mapApiDataToStatusData = (apiData: any): StatusData[] => {
     const transformApiItem = (item: any) => ({
         id: item.id,
         numberDocument: item.numberDocument,
-        fullName:item.fullName,
+        fullName: item.fullName,
         period: item.period,
         amount: item.amount,
         bankId: item.bankId,
@@ -47,10 +47,10 @@ const mapApiDataToStatusData = (apiData: any): StatusData[] => {
         batch: item.batch,
         statusColor: item.statusColor,
         statusLabel: item.statusLabel,
-        updatedAt: item.updatedAt
+        updatedAt: /* item.updatedAt === {} ?  */"-"
     });
 
-    return [
+    const filtroItems = [
         {
             id: 'actualizados',
             title: 'Colaboradores Registrados',
@@ -60,36 +60,6 @@ const mapApiDataToStatusData = (apiData: any): StatusData[] => {
             description: 'Documentos que han sido actualizados por el colaborador',
             items: (apiData.actualizados || []).map(transformApiItem),
             enabled: true
-        },
-        {
-            id: 'correo_procesados',
-            title: 'Correo Procesado',
-            count: apiData.actualizados.filter((item: any) => item.status === 'EC')?.length || 0,
-            color: '#afa54c',
-            icon: null,
-            description: 'Documentos que han sido actualizados por el colaborador',
-            items: [],
-            enabled: false
-        },
-        {
-            id: 'correo_enviados',
-            title: 'Correo Enviados',
-            count: apiData.actualizados.filter((item: any) => item.status === 'AP')?.length || 0,
-            color: '#8b238f',
-            icon: null,
-            description: 'Documentos que han sido actualizados por el colaborador',
-            items: [],
-            enabled: false
-        },
-        {
-            id: 'correo_rechazados',
-            title: 'Correo Rechazados',
-            count: apiData.actualizados.filter((item: any) => item.status === 'ER')?.length || 0,
-            color: '#c06011',
-            icon: null,
-            description: 'Documentos que han sido actualizados por el colaborador',
-            items: [],
-            enabled: false
         },
         {
             id: 'firmados',
@@ -102,6 +72,8 @@ const mapApiDataToStatusData = (apiData: any): StatusData[] => {
             enabled: true
         }
     ];
+    console.log("=>", filtroItems);
+    return filtroItems;
 };
 
 // Get email status counters for visual display
