@@ -121,16 +121,21 @@ const ExpandableRow = ({ item, color, shouldShowBulkActions, selectedItems, onSe
     return (
         <>
             <Row sx={{ bgcolor: selectedItems.has(item.id) ? `${color}15` : (item.isWorking ? '#e8f5e8' : '#ffebee') }}>
+
                 {shouldShowBulkActions && (
                     <TableCell padding="checkbox">
-                        <Checkbox
-                            size="small"
-                            checked={selectedItems.has(item.id)}
-                            onChange={() => onSelectItem(item.id)}
-                            sx={{ color: color }}
-                        />
+                        {!showBatchColumn && (
+                            <Checkbox
+                                size="small"
+                                checked={selectedItems.has(item.id)}
+                                onChange={() => onSelectItem(item.id)}
+                                sx={{ color: color }}
+                            />
+                        )}
+
                     </TableCell>
                 )}
+                {/* DESPUES !showBatchColumn arriba*/}
                 {showBatchColumn && (
                     <TableCell sx={{ fontWeight: 600, color: color }}>
                         {item.batch || '-'}
@@ -289,11 +294,11 @@ export default function StatusTable({
             description: 'Seleccionar elementos en estado FR para generar nuevos lotes',
             count: frItems.length
         },
-        {
+        /* {
             label: 'Lotes Programados',
             description: 'Ver elementos que ya tienen lote asignado',
             count: batchItems.length
-        }
+        } */
     ];
 
     // Filter items based on search term, email filter, internal tab, and batch search
@@ -750,9 +755,13 @@ export default function StatusTable({
                             </Box>
                         )}
 
+
+
                         {/* Bulk Actions Header - Only for Batch Creation (Programación Pago - Generar Lote tab) */}
                         {isBatchCreation && internalTab === 0 && (
                             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                                {/* DESPUES
+                                
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                     <Checkbox
                                         size="small"
@@ -784,7 +793,7 @@ export default function StatusTable({
                                             : `Generar Lote (${selectedItems.size})`
                                         }
                                     </Button>
-                                )}
+                                )} */}
                             </Box>
                         )}
                         <TableContainer sx={{ maxHeight: 400, border: `1px solid ${color}20`, borderRadius: 1 }}>
@@ -827,7 +836,7 @@ export default function StatusTable({
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    
+
                                     {paginatedItems.length > 0 ? (
                                         paginatedItems.map((item) => (
                                             <ExpandableRow
