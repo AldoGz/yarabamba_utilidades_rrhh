@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
     Box,
     Typography,
@@ -14,6 +14,7 @@ import { StatusSummary } from '../components/layout/StatusSummary';
 import { EmailStatusCounters } from '../components/layout/EmailStatusCounters';
 import { useGroupedStateData } from '../hooks/useGroupedStateData';
 import { useGroupedStateUI } from '../hooks/useGroupedStateUI';
+import { useStatusTableStore } from '../stores/useStatusTableStore';
 import { fetchGroupedByState, PersonalItem } from '../api/personal';
 
 interface StatusData {
@@ -105,6 +106,7 @@ export default function GroupedByStatePage() {
     // Custom hooks
     const { data: apiData, isLoading, error, refetch, emailSendMutation, batchCreateMutation } = useGroupedStateData();
     const { activeTab, snackbar, handleTabChange, setSnackbar, closeSnackbar } = useGroupedStateUI();
+    const setTableConfig = useStatusTableStore(state => state.setTableConfig);
 
     // Dynamic year calculation
     const currentYear = new Date().getFullYear();
@@ -146,6 +148,25 @@ export default function GroupedByStatePage() {
     };
 
     const statusData = apiData ? mapApiDataToStatusData(apiData.data) : [];
+    const currentStatus = statusData[activeTab] || statusData[0];
+
+    // Effect to update the store when tab or data changes
+    useEffect(() => {
+        if (!currentStatus) return;
+
+        const showBulkActions = currentStatus.id === 'actualizados' || currentStatus.id === 'firmados';
+        const showEmailFilter = currentStatus.id === 'actualizados';
+        const onBulkUpdateHandler = currentStatus.id === 'actualizados' ? handleBulkUpdate : handleBatchCreate;
+
+        setTableConfig({
+            items: currentStatus.items,
+            color: currentStatus.color,
+            statusId: currentStatus.id,
+            showBulkActions,
+            showEmailFilter,
+            onBulkUpdate: onBulkUpdateHandler,
+        });
+    }, [currentStatus, handleBulkUpdate, handleBatchCreate, setTableConfig]);
 
     if (isLoading) {
         return (
@@ -218,14 +239,7 @@ export default function GroupedByStatePage() {
             <Box sx={{ mb: 4 }}>
                 <Fade in={true} timeout={600}>
                     <Box>
-                        <StatusTable
-                            color={statusData[activeTab].color}
-                            items={statusData[activeTab].items}
-                            showBulkActions={statusData[activeTab].id === 'actualizados' || statusData[activeTab].id === 'firmados'}
-                            showEmailFilter={statusData[activeTab].id === 'actualizados'}
-                            onBulkUpdate={statusData[activeTab].id === 'actualizados' ? handleBulkUpdate : handleBatchCreate}
-                            statusId={statusData[activeTab].id}
-                        />
+                        <StatusTable />
                     </Box>
                 </Fade>
             </Box>

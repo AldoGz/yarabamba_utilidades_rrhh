@@ -20,6 +20,14 @@ interface StatusTableState {
   expandedRows: Set<number>;
   expanded: boolean;
   
+  // Data and configuration
+  items: Array<any>;
+  color: string;
+  statusId: string;
+  showBulkActions: boolean;
+  showEmailFilter: boolean;
+  onBulkUpdate?: (ids: number[]) => Promise<void>;
+  
   // Actions
   setSearchTerm: (term: string) => void;
   setBatchSearchTerm: (term: string) => void;
@@ -38,6 +46,16 @@ interface StatusTableState {
   resetSearchFields: () => void;
   resetAllStates: () => void;
   resetTabStates: () => void;
+  
+  // Configuration action
+  setTableConfig: (config: {
+    items: any[];
+    color: string;
+    statusId: string;
+    showBulkActions: boolean;
+    showEmailFilter: boolean;
+    onBulkUpdate?: (ids: number[]) => Promise<void>;
+  }) => void;
 }
 
 export const useStatusTableStore = create<StatusTableState>((set, get) => ({
@@ -51,6 +69,14 @@ export const useStatusTableStore = create<StatusTableState>((set, get) => ({
   selectedItems: new Set<number>(),
   expandedRows: new Set<number>(),
   expanded: false,
+  
+  // Data and configuration initial values
+  items: [],
+  color: '#4caf50',
+  statusId: '',
+  showBulkActions: false,
+  showEmailFilter: false,
+  onBulkUpdate: undefined,
 
   // Search actions
   setSearchTerm: (term: string) => set({ searchTerm: term, page: 0 }),
@@ -128,6 +154,27 @@ export const useStatusTableStore = create<StatusTableState>((set, get) => ({
     rowsPerPage: 25,
     selectedItems: new Set<number>(),
     expandedRows: new Set<number>(),
-    expanded: false
+    expanded: false,
+    items: [],
+    color: '#4caf50',
+    statusId: '',
+    showBulkActions: false,
+    showEmailFilter: false,
+    onBulkUpdate: undefined
+  }),
+  
+  // Configuration action implementation
+  setTableConfig: ({ items, color, statusId, showBulkActions, showEmailFilter, onBulkUpdate }) => set({
+    items,
+    color,
+    statusId,
+    showBulkActions,
+    showEmailFilter,
+    onBulkUpdate,
+    // Reset pagination and selection when data changes
+    page: 0,
+    selectedItems: new Set(),
+    searchTerm: '',
+    batchSearchTerm: '',
   })
 }));

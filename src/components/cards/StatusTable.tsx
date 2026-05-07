@@ -63,32 +63,6 @@ const emailFilterOptions = [
 ];
 
 
-interface StatusTableProps {
-    color: string; 
-    items: Array<{
-        id: number;
-        numberDocument: string;
-        fullName: string;
-        period: string;
-        amount: number;
-        bankId: number;
-        bankAccountNumber: string;
-        cci: string;
-        email: string;
-        phone1: string;
-        phone2: string | null;
-        isWorking: boolean;
-        status: string;
-        batch: string | null;
-        statusColor: string;
-        statusLabel: string;
-        updatedAt: string
-    }>;
-    showBulkActions?: boolean;
-    onBulkUpdate?: (selectedIds: number[]) => Promise<void>;
-    statusId?: string;
-    showEmailFilter?: boolean;
-}
 
 
 const Row = styled(TableRow)(({ theme }) => ({
@@ -199,17 +173,18 @@ const ExpandableRow = ({ item, color, shouldShowBulkActions, selectedItems, onSe
     );
 };
 
-export default function StatusTable({
-    color,
-    items,
-    showBulkActions = false,
-    onBulkUpdate,
-    statusId,
-    showEmailFilter = false
-}: StatusTableProps) {
+export default function StatusTable() {
     const [additionalFilter, setAdditionalFilter] = useState<string>('todos');
     
     const {
+        // Data and configuration from store
+        color,
+        items,
+        statusId,
+        showBulkActions,
+        showEmailFilter,
+        onBulkUpdate,
+        // UI state from store
         searchTerm,
         batchSearchTerm,
         emailFilter,
@@ -219,6 +194,7 @@ export default function StatusTable({
         selectedItems,
         expandedRows,
         expanded,
+        // Actions from store
         setSearchTerm,
         setBatchSearchTerm,
         setEmailFilter,
