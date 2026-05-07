@@ -1,10 +1,7 @@
 import axios from "axios";
 
 // API configuration from environment variables
-const isProduction = import.meta.env.VITE_PRODUCTION === "true";
-const API_BASE_URL = isProduction 
-  ? import.meta.env.VITE_API_BASE_URL_PROD 
-  : import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const API_TIMEOUT = parseInt(import.meta.env.VITE_API_TIMEOUT) || 10000;
 
 export const apiClient = axios.create({
