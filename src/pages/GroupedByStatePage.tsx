@@ -48,7 +48,7 @@ const mapApiDataToStatusData = (apiData: any): StatusData[] => {
         batch: item.batch,
         statusColor: item.statusColor,
         statusLabel: item.statusLabel,
-        updatedAt: /* item.updatedAt === {} ?  */"-"
+        updatedAt: item.updatedAt ?? "-"
     });
 
     return [

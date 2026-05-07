@@ -28,23 +28,17 @@ import {
     Chip,
     TextField,
     InputAdornment,
-    Avatar,
-    Backdrop,
     CircularProgress,
     Alert,
-    Snackbar,
     Tabs,
     Tab
 } from '@mui/material';
 import {
-    ExpandMore as ExpandMoreIcon,
-    Person as PersonIcon,
     Search as SearchIcon,
     Clear as ClearIcon,
     Email as EmailIcon,
     KeyboardArrowDown as KeyboardArrowDownIcon,
-    GroupWork as GroupWorkIcon,
-    List as ListIcon
+    GroupWork as GroupWorkIcon
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 
@@ -61,9 +55,6 @@ const emailFilterOptions = [
         description: 'Estado de la notificación por correo electrónico.'
     }
 ];
-
-
-
 
 const Row = styled(TableRow)(({ theme }) => ({
     '&:nth-of-type(odd)': {
@@ -174,8 +165,8 @@ const ExpandableRow = ({ item, color, shouldShowBulkActions, selectedItems, onSe
 };
 
 export default function StatusTable() {
-    const [additionalFilter, setAdditionalFilter] = useState<string>('todos');
-    
+    const [additionalFilter, setAdditionalFilter] = useState<string>('TO');
+
     const {
         // Data and configuration from store
         color,
@@ -193,7 +184,6 @@ export default function StatusTable() {
         rowsPerPage,
         selectedItems,
         expandedRows,
-        expanded,
         // Actions from store
         setSearchTerm,
         setBatchSearchTerm,
@@ -204,9 +194,7 @@ export default function StatusTable() {
         setSelectedItems,
         toggleSelectedItem,
         clearSelectedItems,
-        setExpandedRows,
         toggleExpandedRow,
-        setExpanded,
         resetTabStates
     } = useStatusTableStore();
 
@@ -279,7 +267,7 @@ export default function StatusTable() {
         if (showEmailFilter) {
             if (emailFilter === 'XX') {
                 filtered = filtered.filter(item => ['EC', 'ER', 'AP'].includes(item.status));
-                if (additionalFilter !== 'todos') {
+                if (additionalFilter !== 'TO') {
                     filtered = filtered.filter(item => item.status === additionalFilter);
                 }
             } else {
@@ -507,11 +495,9 @@ export default function StatusTable() {
                                 </Tabs>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
                                     <Typography variant="caption" color="text.secondary">
-                                        Filtro activo xxx:
+                                        Filtro activo:
                                     </Typography>
-                                    <pre>{additionalFilter}</pre>
-                                    <pre>{JSON.stringify(emailFilterOptions, null,2)}</pre>
-                                    
+
                                     <Chip
                                         label={emailFilterOptions.find(opt => opt.value === emailFilter)?.label}
                                         color="primary"
@@ -672,8 +658,7 @@ export default function StatusTable() {
                                 </Box>
                             </Box>
                         )}
-
-                        {emailFilter !== "AC" && (
+                        {emailFilter !== "AC" && !isBatchCreation && (
                             <FormControl size="small" sx={{ minWidth: 180, mb: 2 }}>
                                 <InputLabel id="additional-filter-label">Filtro adicional</InputLabel>
                                 <Select
@@ -682,7 +667,7 @@ export default function StatusTable() {
                                     label="Filtro adicional"
                                     onChange={(e) => setAdditionalFilter(e.target.value)}
                                 >
-                                    <MenuItem value="todos">TODOS</MenuItem>
+                                    <MenuItem value="TO">TODOS</MenuItem>
                                     <MenuItem value="AP">ENVIADO</MenuItem>
                                     <MenuItem value="EC">EN PROCESO</MenuItem>
                                     <MenuItem value="ER">RECHAZADOS</MenuItem>
