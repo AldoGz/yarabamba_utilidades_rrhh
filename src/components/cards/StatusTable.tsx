@@ -560,6 +560,7 @@ export default function StatusTable({
                                         Filtro activo xxx:
                                     </Typography>
                                     <pre>{additionalFilter}</pre>
+                                    <pre>{JSON.stringify(emailFilterOptions, null,2)}</pre>
                                     
                                     <Chip
                                         label={emailFilterOptions.find(opt => opt.value === emailFilter)?.label}
