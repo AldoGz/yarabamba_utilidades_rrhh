@@ -223,9 +223,9 @@ export default function StatusTable({
     statusId,
     showEmailFilter = false
 }: StatusTableProps) {
+    // 1. Nuevo estado (añadir junto a los otros useState)
+    const [additionalFilter, setAdditionalFilter] = useState<string>('todos');
     // Zustand store for state management
-
-    console.log("StatusTable props:", { title, count, color, description, items, showBulkActions, onBulkUpdate, statusId, showEmailFilter });
     const {
         searchTerm,
         batchSearchTerm,
@@ -325,10 +325,13 @@ export default function StatusTable({
         // Apply email filter if enabled
         if (showEmailFilter) {
             if (emailFilter === 'XX') {
-                // Combine EC, ER, and AP statuses for "Estado Notificación"
+                console.log(additionalFilter);
                 filtered = filtered.filter(item => ['EC', 'ER', 'AP'].includes(item.status));
+                // Apply additional filter if not 'todos'
+                if (additionalFilter !== 'todos') {
+                    filtered = filtered.filter(item => item.status === additionalFilter);
+                }
             } else {
-                // Single status filter for other options
                 filtered = filtered.filter(item => item.status === emailFilter);
             }
         }
@@ -357,7 +360,7 @@ export default function StatusTable({
         }
 
         return filtered;
-    }, [items, searchTerm, emailFilter, showEmailFilter, isBatchCreation, internalTab, frItems, batchItems, batchSearchTerm]);
+    }, [items, searchTerm, emailFilter, showEmailFilter, isBatchCreation, internalTab, frItems, batchItems, batchSearchTerm, additionalFilter]);
 
     // Reset states when items change
     useEffect(() => {
@@ -554,8 +557,10 @@ export default function StatusTable({
                                 </Tabs>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
                                     <Typography variant="caption" color="text.secondary">
-                                        Filtro activo:
+                                        Filtro activo xxx:
                                     </Typography>
+                                    <pre>{additionalFilter}</pre>
+                                    
                                     <Chip
                                         label={emailFilterOptions.find(opt => opt.value === emailFilter)?.label}
                                         color="primary"
@@ -716,6 +721,24 @@ export default function StatusTable({
                                 </Box>
                             </Box>
                         )}
+
+                        {emailFilter !== "AC" && (
+                            <FormControl size="small" sx={{ minWidth: 180, mb: 2 }}>
+                                <InputLabel id="additional-filter-label">Filtro adicional</InputLabel>
+                                <Select
+                                    labelId="additional-filter-label"
+                                    value={additionalFilter}
+                                    label="Filtro adicional"
+                                    onChange={(e) => setAdditionalFilter(e.target.value)}
+                                >
+                                    <MenuItem value="todos">TODOS</MenuItem>
+                                    <MenuItem value="AP">ENVIADO</MenuItem>
+                                    <MenuItem value="EC">EN PROCESO</MenuItem>
+                                    <MenuItem value="ER">RECHAZADOS</MenuItem>
+                                </Select>
+                            </FormControl>
+                        )}
+
 
                         {/* Bulk Actions Header - Only for Email Sending (Colaboradores Registrados - Procesando tab only) */}
                         {!isBatchCreation && showBulkActions && emailFilter === 'AC' && (

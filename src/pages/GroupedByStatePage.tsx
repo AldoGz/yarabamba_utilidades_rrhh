@@ -50,7 +50,7 @@ const mapApiDataToStatusData = (apiData: any): StatusData[] => {
         updatedAt: /* item.updatedAt === {} ?  */"-"
     });
 
-    const filtroItems = [
+    return [
         {
             id: 'actualizados',
             title: 'Colaboradores Registrados',
@@ -72,8 +72,6 @@ const mapApiDataToStatusData = (apiData: any): StatusData[] => {
             enabled: true
         }
     ];
-    console.log("=>", filtroItems);
-    return filtroItems;
 };
 
 // Get email status counters for visual display
