@@ -719,7 +719,6 @@ export default function StatusTable() {
                         {/* Bulk Actions Header - Only for Batch Creation (Programación Pago - Generar Lote tab) */}
                         {isBatchCreation && internalTab === 0 && (
                             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                                {/* DESPUES
                                 
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                     <Checkbox
@@ -752,7 +751,7 @@ export default function StatusTable() {
                                             : `Generar Lote (${selectedItems.size})`
                                         }
                                     </Button>
-                                )} */}
+                                )}
                             </Box>
                         )}
                         <TableContainer sx={{ maxHeight: 400, border: `1px solid ${color}20`, borderRadius: 1 }}>

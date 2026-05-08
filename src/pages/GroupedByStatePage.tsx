@@ -48,7 +48,8 @@ const mapApiDataToStatusData = (apiData: any): StatusData[] => {
         batch: item.batch,
         statusColor: item.statusColor,
         statusLabel: item.statusLabel,
-        updatedAt: item.updatedAt ?? "-"
+        updatedAt: item.updatedAt ?? "-",
+        bank: item.bank.description
     });
 
     return [
@@ -64,7 +65,7 @@ const mapApiDataToStatusData = (apiData: any): StatusData[] => {
         },
         {
             id: 'firmados',
-            title: 'Programación Pago',
+            title: 'Para Programación de Pago',
             count: apiData.firmados?.length || 0,
             color: '#ff9800',
             icon: null,
@@ -80,10 +81,10 @@ const getEmailStatusCounters = (apiData: any) => {
     return [
         {
             id: 'correo_procesados',
-            title: 'Correo Procesado',
+            title: ' Correos siendo Procesados',
             count: apiData.actualizados.filter((item: any) => item.status === 'EC')?.length || 0,
             color: '#2196f3',
-            description: 'Correos procesados y enviados'
+            description: 'Correos siendo procesados para enviados'
         },
         {
             id: 'correo_enviados',
