@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useStatusTableStore } from '../../stores/useStatusTableStore.ts';
+import LotesList from './LotesList';
 import {
     Card,
     CardContent,
@@ -164,13 +165,14 @@ const ExpandableRow = ({ item, color, shouldShowBulkActions, selectedItems, onSe
     );
 };
 
-export default function StatusTable() {
+export default function StatusTable({batches, onSendBatchEmail}: {batches: any[]; onSendBatchEmail?: (lotes: string[]) => Promise<void>}) {
     const [additionalFilter, setAdditionalFilter] = useState<string>('TO');
 
     const {
         // Data and configuration from store
         color,
         items,
+        lotes,
         statusId,
         showBulkActions,
         showEmailFilter,
@@ -195,7 +197,8 @@ export default function StatusTable() {
         toggleSelectedItem,
         clearSelectedItems,
         toggleExpandedRow,
-        resetTabStates
+        resetTabStates,
+        resetTabStatesButKeepCurrentTab
     } = useStatusTableStore();
 
     // Local states for component-specific functionality
@@ -231,6 +234,8 @@ export default function StatusTable() {
 
     // Filter items that already have batches for displaying
     const batchItems = useMemo(() => {
+        console.log("=>", items);
+
         return items.filter(item => item.batch && item.batch.trim() !== '');
     }, [items]);
 
@@ -244,7 +249,7 @@ export default function StatusTable() {
         {
             label: 'Confirmado para pago',
             description: 'Ver elementos que ya tienen lote asignado',
-            count: batchItems.length
+            count: batches.length
         }
     ];
 
@@ -302,8 +307,8 @@ export default function StatusTable() {
 
     // Reset states when items change
     useEffect(() => {
-        resetTabStates();
-    }, [items, resetTabStates]);
+        resetTabStatesButKeepCurrentTab();
+    }, [items, resetTabStatesButKeepCurrentTab]);
 
     // Get paginated items
     const paginatedItems = useMemo(() => {
@@ -821,77 +826,83 @@ export default function StatusTable() {
                                 )}
                             </Box>
                         )}
-                        <TableContainer sx={{ maxHeight: 400, border: `1px solid ${color}20`, borderRadius: 1 }}>
-                            <Table stickyHeader size="small">
-                                <TableHead>
-                                    <TableRow sx={{ bgcolor: `${color}10` }}>
-                                        {(!isBatchCreation && showBulkActions && emailFilter === 'AC') && (
-                                            <TableCell padding="checkbox">
-                                                <Checkbox
-                                                    size="small"
-                                                    checked={filteredItems.length > 0 && selectedItems.size === filteredItems.length}
-                                                    indeterminate={selectedItems.size > 0 && selectedItems.size < filteredItems.length}
-                                                    onChange={handleSelectAll}
-                                                    sx={{ color: color }}
-                                                />
-                                            </TableCell>
-                                        )}
-                                        {isBatchCreation && internalTab === 0 && (
-                                            <TableCell padding="checkbox">
-                                                <Checkbox
-                                                    size="small"
-                                                    checked={filteredItems.length > 0 && selectedItems.size === filteredItems.length}
-                                                    indeterminate={selectedItems.size > 0 && selectedItems.size < filteredItems.length}
-                                                    onChange={handleSelectAll}
-                                                    sx={{ color: color }}
-                                                />
-                                            </TableCell>
-                                        )}
-                                        {isBatchCreation && internalTab === 1 && (
-                                            <TableCell sx={{ fontWeight: 600 }}>Lote</TableCell>
-                                        )}
-                                        <TableCell sx={{ fontWeight: 600 }}>DNI</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>Nombres y Apellidos</TableCell>
-                                        <TableCell>Monto</TableCell>
-                                        <TableCell>Periodo</TableCell>
-                                        <TableCell>Teléfono</TableCell>
-                                        <TableCell>Fecha Registro</TableCell>
-                                        <TableCell>Estado</TableCell>
-                                        <TableCell>Detalles</TableCell>
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-
-                                    {paginatedItems.length > 0 ? (
-                                        paginatedItems.map((item) => (
-                                            <ExpandableRow
-                                                key={item.id}
-                                                item={item}
-                                                color={color}
-                                                shouldShowBulkActions={(!isBatchCreation && showBulkActions && emailFilter === 'AC') || (isBatchCreation && internalTab === 0)}
-                                                selectedItems={selectedItems}
-                                                onSelectItem={handleSelectItem}
-                                                expanded={expandedRows.has(item.id)}
-                                                onToggleExpand={() => handleToggleRowExpand(item.id)}
-                                                showBatchColumn={isBatchCreation && internalTab === 1}
-                                            />
-                                        ))
-                                    ) : (
-                                        <TableRow>
-                                            <TableCell colSpan={shouldShowSelectionBulkActions ? (isBatchCreation && internalTab === 1 ? 10 : 9) : (isBatchCreation && internalTab === 1 ? 9 : 8)} align="center" sx={{ py: 4 }}>
-                                                <Typography variant="body2" color="text.secondary">
-                                                    {searchTerm && !(isBatchCreation && internalTab === 1) ? 'No se encontraron resultados' :
-                                                        batchSearchTerm && isBatchCreation && internalTab === 1 ? `No se encontraron resultados para "${batchSearchTerm}"` :
-                                                            isBatchCreation && internalTab === 0 ? 'No hay elementos en estado FR para generar lotes' :
-                                                                isBatchCreation && internalTab === 1 ? 'No hay lotes programados' :
-                                                                    'No hay elementos disponibles'}
-                                                </Typography>
-                                            </TableCell>
+                        {/*  */}
+                        {/* Show LotesList for Confirmado para pago tab, otherwise show table */}
+                        {isBatchCreation && internalTab === 1 ? (
+                            <LotesList
+                                lotes={batches}
+                                color={color}
+                                onSendEmail={onSendBatchEmail}
+                            />
+                            
+                        ) : (
+                            <TableContainer sx={{ maxHeight: 400, border: `1px solid ${color}20`, borderRadius: 1 }}>
+                                <Table stickyHeader size="small">
+                                    <TableHead>
+                                        <TableRow sx={{ bgcolor: `${color}10` }}>
+                                            {(!isBatchCreation && showBulkActions && emailFilter === 'AC') && (
+                                                <TableCell padding="checkbox">
+                                                    <Checkbox
+                                                        size="small"
+                                                        checked={filteredItems.length > 0 && selectedItems.size === filteredItems.length}
+                                                        indeterminate={selectedItems.size > 0 && selectedItems.size < filteredItems.length}
+                                                        onChange={handleSelectAll}
+                                                        sx={{ color: color }}
+                                                    />
+                                                </TableCell>
+                                            )}
+                                            {isBatchCreation && internalTab === 0 && (
+                                                <TableCell padding="checkbox">
+                                                    <Checkbox
+                                                        size="small"
+                                                        checked={filteredItems.length > 0 && selectedItems.size === filteredItems.length}
+                                                        indeterminate={selectedItems.size > 0 && selectedItems.size < filteredItems.length}
+                                                        onChange={handleSelectAll}
+                                                        sx={{ color: color }}
+                                                    />
+                                                </TableCell>
+                                            )}
+                                            <TableCell sx={{ fontWeight: 600 }}>DNI</TableCell>
+                                            <TableCell sx={{ fontWeight: 600 }}>Nombres y Apellidos</TableCell>
+                                            <TableCell>Monto</TableCell>
+                                            <TableCell>Periodo</TableCell>
+                                            <TableCell>Teléfono</TableCell>
+                                            <TableCell>Fecha Registro</TableCell>
+                                            <TableCell>Estado</TableCell>
+                                            <TableCell>Detalles</TableCell>
                                         </TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
+                                    </TableHead>
+                                    <TableBody>
+
+                                        {paginatedItems.length > 0 ? (
+                                            paginatedItems.map((item) => (
+                                                <ExpandableRow
+                                                    key={item.id}
+                                                    item={item}
+                                                    color={color}
+                                                    shouldShowBulkActions={(!isBatchCreation && showBulkActions && emailFilter === 'AC') || (isBatchCreation && internalTab === 0)}
+                                                    selectedItems={selectedItems}
+                                                    onSelectItem={handleSelectItem}
+                                                    expanded={expandedRows.has(item.id)}
+                                                    onToggleExpand={() => handleToggleRowExpand(item.id)}
+                                                    showBatchColumn={false}
+                                                />
+                                            ))
+                                        ) : (
+                                            <TableRow>
+                                                <TableCell colSpan={shouldShowSelectionBulkActions ? 9 : 8} align="center" sx={{ py: 4 }}>
+                                                    <Typography variant="body2" color="text.secondary">
+                                                        {searchTerm && !(isBatchCreation && internalTab === 1) ? 'No se encontraron resultados' :
+                                                            isBatchCreation && internalTab === 0 ? 'No hay elementos en estado FR para generar lotes' :
+                                                                'No hay elementos disponibles'}
+                                                    </Typography>
+                                                </TableCell>
+                                            </TableRow>
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
+                        )}
 
                         {/* Pagination */}
                         {filteredItems.length > rowsPerPage && (

@@ -1,16 +1,19 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchGroupedByState, bulkUpdateStatus, sendBulkEmail, createBatch } from '../api/personal';
+import { fetchGroupedByState, bulkUpdateStatus, sendBulkEmail, createBatch, sendBatchEmail } from '../api/personal';
 
 interface UseGroupedStateDataReturn {
     data: any;
+    batches : any;
     isLoading: boolean;
     error: any;
     refetch: () => void;
     bulkUpdateMutation: any;
     emailSendMutation: any;
     batchCreateMutation: any;
+    batchEmailSendMutation: any;
     handleBulkUpdate: (selectedIds: number[]) => Promise<void>;
     handleBatchCreate: (selectedIds: number[]) => Promise<void>;
+    handleBatchEmailSend: (selectedLotes: string[]) => Promise<void>;
 }
 
 export const useGroupedStateData = (): UseGroupedStateDataReturn => {
@@ -60,6 +63,18 @@ export const useGroupedStateData = (): UseGroupedStateDataReturn => {
         }
     });
 
+    // Batch email send mutation
+    const batchEmailSendMutation = useMutation({
+        mutationFn: sendBatchEmail,
+        onSuccess: (data) => {
+            console.log('Batch email send successful:', data);
+            queryClient.invalidateQueries({ queryKey: ['grouped-by-state'] });
+        },
+        onError: (error: any) => {
+            console.error('Batch email send error:', error);
+        }
+    });
+
     // Handlers
     const handleBulkUpdate = async (selectedIds: number[]) => {
         await bulkUpdateMutation.mutateAsync(selectedIds);
@@ -69,15 +84,24 @@ export const useGroupedStateData = (): UseGroupedStateDataReturn => {
         await batchCreateMutation.mutateAsync(selectedIds);
     };
 
+    const handleBatchEmailSend = async (selectedLotes: string[]) => {
+        await batchEmailSendMutation.mutateAsync(selectedLotes);
+    };
+
+    const batches = data?.data?.lotes || [];
+
     return {
         data,
+        batches,
         isLoading,
         error,
         refetch,
         bulkUpdateMutation,
         emailSendMutation,
         batchCreateMutation,
+        batchEmailSendMutation,
         handleBulkUpdate,
-        handleBatchCreate
+        handleBatchCreate,
+        handleBatchEmailSend
     };
 };

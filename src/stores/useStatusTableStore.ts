@@ -46,6 +46,7 @@ interface StatusTableState {
   resetSearchFields: () => void;
   resetAllStates: () => void;
   resetTabStates: () => void;
+  resetTabStatesButKeepCurrentTab: () => void;
   
   // Configuration action
   setTableConfig: (config: {
@@ -144,6 +145,14 @@ export const useStatusTableStore = create<StatusTableState>((set, get) => ({
     selectedItems: new Set<number>(),
     internalTab: 0
   }),
+  
+  resetTabStatesButKeepCurrentTab: () => set((state) => ({
+    searchTerm: '',
+    batchSearchTerm: '',
+    page: 0,
+    selectedItems: new Set<number>(),
+    internalTab: state.internalTab // Keep current tab
+  })),
   
   resetAllStates: () => set({
     searchTerm: '',

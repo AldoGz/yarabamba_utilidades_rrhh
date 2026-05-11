@@ -76,6 +76,8 @@ const mapApiDataToStatusData = (apiData: any): StatusData[] => {
     ];
 };
 
+
+
 // Get email status counters for visual display
 const getEmailStatusCounters = (apiData: any) => {
     return [
@@ -105,7 +107,7 @@ const getEmailStatusCounters = (apiData: any) => {
 
 export default function GroupedByStatePage() {
     // Custom hooks
-    const { data: apiData, isLoading, error, refetch, emailSendMutation, batchCreateMutation } = useGroupedStateData();
+    const { data: apiData, batches, isLoading, error, refetch, emailSendMutation, batchCreateMutation, handleBatchEmailSend } = useGroupedStateData();
     const { activeTab, snackbar, handleTabChange, setSnackbar, closeSnackbar } = useGroupedStateUI();
     const setTableConfig = useStatusTableStore(state => state.setTableConfig);
 
@@ -149,6 +151,8 @@ export default function GroupedByStatePage() {
     };
 
     const statusData = apiData ? mapApiDataToStatusData(apiData.data) : [];
+
+
     const currentStatus = statusData[activeTab] || statusData[0];
 
     // Effect to update the store when tab or data changes
@@ -240,7 +244,7 @@ export default function GroupedByStatePage() {
             <Box sx={{ mb: 4 }}>
                 <Fade in={true} timeout={600}>
                     <Box>
-                        <StatusTable />
+                        <StatusTable batches={batches} onSendBatchEmail={handleBatchEmailSend} />
                     </Box>
                 </Fade>
             </Box>

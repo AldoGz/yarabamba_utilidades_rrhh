@@ -112,3 +112,24 @@ export const createBatch = async (ids: number[]): Promise<BatchCreateResponse> =
     throw error;
   }
 };
+
+export interface BatchEmailSendRequest {
+  lotes: string[];
+}
+
+export interface BatchEmailSendResponse {
+  success: boolean;
+  message: string;
+  sentCount?: number;
+  failedCount?: number;
+}
+
+export const sendBatchEmail = async (lotes: string[]): Promise<BatchEmailSendResponse> => {
+  try {
+    const response = await apiClient.put('/personal-utilidades/batch/colaborador/enviar-correo', { lotes });
+    return response.data;
+  } catch (error) {
+    console.error('Error sending batch email:', error);
+    throw error;
+  }
+};
