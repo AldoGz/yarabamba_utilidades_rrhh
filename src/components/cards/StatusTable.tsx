@@ -241,11 +241,11 @@ export default function StatusTable() {
             description: 'Seleccionar elementos en estado FR para generar nuevos lotes',
             count: frItems.length
         },
-        /* {
-            label: 'Lotes Programados',
+        {
+            label: 'Confirmado para pago',
             description: 'Ver elementos que ya tienen lote asignado',
             count: batchItems.length
-        } */
+        }
     ];
 
     const filteredItems = useMemo(() => {
@@ -311,7 +311,75 @@ export default function StatusTable() {
         return filteredItems.slice(startIndex, startIndex + rowsPerPage);
     }, [filteredItems, page, rowsPerPage]);
 
+    // Método auxiliar para limpiar y convertir un monto en soles
+    const parseSolesAmount = (amountStr) => {
+        if (!amountStr || typeof amountStr !== 'string') return 0;
+        
+        // Extraer la parte numérica después de "S/ " (si existe)
+        let numericPart = amountStr.includes("S/") 
+            ? amountStr.split("S/")[1] 
+            : amountStr;
+        
+        // Eliminar espacios en blanco al inicio/final
+        numericPart = numericPart.trim();
+        
+        // Eliminar TODAS las comas (separadores de miles)
+        numericPart = numericPart.replace(/,/g, '');
+        
+        // Reemplazar posible coma decimal por punto (si viene "1.234,56")
+        numericPart = numericPart.replace(/,/g, '.'); // Ya eliminamos comas, pero por si acaso
+        // Nota: si usas locale español que usa coma decimal, ajusta según tu caso
+        // Aquí asumimos punto decimal (formato internacional)
+        
+        // Convertir a número
+        const number = parseFloat(numericPart);
+        return isNaN(number) ? 0 : number;
+    };
 
+    // Calculate total amount from filtered items
+    
+
+    const formatNumberWithCommas = (num) => {
+        // Redondear a 2 decimales
+        let rounded = Math.round(num * 100) / 100;
+        // Separar parte entera y decimal
+        let [integerPart, decimalPart] = rounded.toFixed(2).split('.');
+        // Agregar comas a la parte entera (de derecha a izquierda cada 3 dígitos)
+        let formattedInteger = '';
+        for (let i = integerPart.length - 1, count = 0; i >= 0; i--) {
+            formattedInteger = integerPart[i] + formattedInteger;
+            count++;
+            if (count % 3 === 0 && i !== 0) {
+                formattedInteger = ',' + formattedInteger;
+            }
+        }
+        // Retornar con dos decimales
+        return formattedInteger + '.' + decimalPart;
+    };
+
+    const totalAmount = useMemo(() => {
+        const sum = filteredItems.reduce((sum, item) => {
+            const amount = parseSolesAmount(item.amount);
+            return sum + amount;
+        }, 0);
+        // Formateamos el total con separadores de miles (comas) y dos decimales
+        return `S/ ${formatNumberWithCommas(sum)}`;
+    }, [filteredItems]);
+
+    // Calculate total amount from selected items
+    const selectedTotalAmount = useMemo(() => {
+        const selectedIds = Array.from(selectedItems);
+        const sum = selectedIds.reduce((sum, itemId) => {
+            const item = items.find(item => item.id === itemId);
+            if (item) {
+                const amount = parseSolesAmount(item.amount);
+                return sum + amount;
+            }
+            return sum;
+        }, 0);
+        // Formateamos el total con separadores de miles (comas) y dos decimales
+        return `S/ ${formatNumberWithCommas(sum)}`;
+    }, [selectedItems, items]);
 
     const handleClearSearch = () => {
         setSearchTerm('');
@@ -406,7 +474,7 @@ export default function StatusTable() {
             clearSelectedItems();
             setConfirmDialogOpen(false);
             setOperationStatus({
-                message: `Se actualizaron ${selectedIds.length} registros correctamente en ${batches.length} lotes xxx`,
+                message: `Se actualizaron ${selectedIds.length} registros correctamente en ${batches.length} lotes`,
                 severity: 'success'
             });
         } catch (error) {
@@ -450,7 +518,6 @@ export default function StatusTable() {
                                     value={emailFilterOptions.findIndex(opt => opt.value === emailFilter)}
                                     onChange={(_, newValue) => {
                                         setEmailFilter(emailFilterOptions[newValue].value);
-                                        //setSearchTerm(''); // Clear search when switching tabs
                                         setPage(0);
                                         setSelectedItems(new Set()); // Clear selection when switching tabs
                                     }}
@@ -918,10 +985,17 @@ export default function StatusTable() {
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                         {isBatchCreation
-                            ? 'Se agruparán los elementos seleccionados en un lote único para procesamiento de pago. Solo se pueden seleccionar elementos en estado FR.'
+                            ? 'Se agruparán los elementos seleccionados en un lote único para procesamiento de pago. Solo se pueden seleccionar elementos en estado.'
                             : 'Se adjuntará el archivo de haberes utilidades de cada colaborador en formato PDF, junto con un código de aprobación único para la firma digital.'
                         }
                     </Typography>
+                    {
+                        isBatchCreation && (
+                            <Typography variant="body2" color="text.secondary">
+                                Monto total del lote es {selectedTotalAmount}.
+                            </Typography>
+                        )
+                    }
                     {isUpdating && (
                         <Box sx={{ mt: 2 }}>
                             <LinearProgress />
