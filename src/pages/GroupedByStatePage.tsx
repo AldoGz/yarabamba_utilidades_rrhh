@@ -72,6 +72,17 @@ const mapApiDataToStatusData = (apiData: any): StatusData[] => {
             description: 'Documentos firmados y programados para pago',
             items: (apiData.firmados || []).map(transformApiItem),
             enabled: true
+        },
+        {
+            id: 'confirmado-pago',
+            title: 'Lote Confirmado para Pago',
+            count: apiData.lotes?.length || 0,
+            color: '#9c27b0',
+            icon: null,
+            description: 'Lotes confirmados para envío de correos',
+            items: [],
+            enabled: true,
+            showInTabs: false
         }
     ];
 };
@@ -236,7 +247,7 @@ export default function GroupedByStatePage() {
 
             {/* Status Tabs Component */}
             <StatusTabs
-                statusData={statusData.filter(status => status.enabled)}
+                statusData={statusData.filter(status => status.enabled && (status.showInTabs !== false))}
                 activeTab={activeTab}
                 onTabChange={handleTabChange}
             />
