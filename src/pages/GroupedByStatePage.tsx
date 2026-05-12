@@ -26,6 +26,7 @@ interface StatusData {
     description: string;
     items: PersonalItem[];
     enabled: boolean;
+    showInTabs : boolean;
 }
 
 // Map API response to component data structure
@@ -61,7 +62,8 @@ const mapApiDataToStatusData = (apiData: any): StatusData[] => {
             icon: null,
             description: 'Documentos que han sido actualizados por el colaborador',
             items: (apiData.actualizados || []).map(transformApiItem),
-            enabled: true
+            enabled: true,
+            showInTabs: true
         },
         {
             id: 'firmados',
@@ -71,7 +73,8 @@ const mapApiDataToStatusData = (apiData: any): StatusData[] => {
             icon: null,
             description: 'Documentos firmados y programados para pago',
             items: (apiData.firmados || []).map(transformApiItem),
-            enabled: true
+            enabled: true,
+            showInTabs: true
         },
         {
             id: 'confirmado-pago',
